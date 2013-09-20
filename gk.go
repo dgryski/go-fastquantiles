@@ -54,7 +54,9 @@ func (s *Stream) Insert(v float64) {
 	}
 
 	s.n++
-	s.compress()
+	if s.n%int(1.0/float64(2.0*epsilon)) == 0 {
+		s.compress()
+	}
 }
 
 func (s *Stream) compress() {
