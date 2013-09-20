@@ -1,0 +1,22 @@
+Approximate streaming quantiles
+
+
+My goal is to implement:
+
+"A Fast Algorithm for Approximate Quantiles in High Speed Data Streams" (Qi Zhang and Wei Wang, 2007).
+
+http://www.cs.unc.edu/~zhangq/PUBLICATIONS/SSDBM07-Qi%20Zhang-FastQStream.pdf
+
+Course notes:
+http://www.mathcs.emory.edu/~cheung/Courses/584-StreamDB/Syllabus/08-Quantile/Zhang.html
+http://www.mathcs.emory.edu/~cheung/Courses/584-StreamDB/Syllabus/08-Quantile/Zhang2.html
+
+Zhang/Wang is based on Greenwald and Khanna's algorithm from
+http://infolab.stanford.edu/~datar/courses/cs361a/papers/quantiles.pdf
+
+So I decided to start with GK.  There's a good overview at
+http://papercruncher.com/2010/03/02/stream-algorithms-order-statistics/
+
+and more detailed notes at
+http://www.mathcs.emory.edu/~cheung/Courses/584-StreamDB/Syllabus/08-Quantile/Greenwald.html
+http://www.mathcs.emory.edu/~cheung/Courses/584-StreamDB/Syllabus/08-Quantile/Greenwald2.html

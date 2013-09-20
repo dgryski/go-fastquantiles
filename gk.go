@@ -1,7 +1,4 @@
 // Package gk implements Greenwald-Khanna streaming quantiles
-// http://dl.acm.org/citation.cfm?doid=375663.375670
-// http://www.mathcs.emory.edu/~cheung/Courses/584-StreamDB/Syllabus/08-Quantile/Greenwald.html
-// implementation translated from http://papercruncher.com/2010/03/02/stream-algorithms-order-statistics/
 package gk
 
 import (
