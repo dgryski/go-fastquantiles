@@ -17,16 +17,16 @@ type tuple struct {
 	delta float64
 }
 
-type stream struct {
+type Stream struct {
 	summary *list.List
 	n       int
 }
 
-func New() *stream {
-	return &stream{summary: list.New()}
+func New() *Stream {
+	return &Stream{summary: list.New()}
 }
 
-func (s *stream) Insert(v float64) {
+func (s *Stream) Insert(v float64) {
 
 	value := &tuple{v, 1, 0}
 
@@ -60,7 +60,7 @@ func (s *stream) Insert(v float64) {
 	s.compress()
 }
 
-func (s *stream) compress() {
+func (s *Stream) compress() {
 
 	for elt := s.summary.Front(); elt.Next() != nil; {
 		next := elt.Next()
@@ -74,7 +74,7 @@ func (s *stream) compress() {
 	}
 }
 
-func (s *stream) Query(q float64) float64 {
+func (s *Stream) Query(q float64) float64 {
 
 	// convert quantile to rank
 
