@@ -64,7 +64,7 @@ func (s *Stream) Update(e float64) {
 		   sk contained a compressed summary
 		   -------------------------------------- */
 
-		tmp := s.merge(s.summary[k], sc)
+		tmp := merge(s.summary[k], sc)
 		sc = prune(tmp, (s.b+1)/2+1)
 		// NOTE: sc is used in next iteration
 		// -  it is passed to the next level !
@@ -113,7 +113,7 @@ func lookupRank(summary gksummary, r int) tuple {
 
 // From http://www.mathcs.emory.edu/~cheung/Courses/584-StreamDB/Syllabus/08-Quantile/Greenwald-D.html "Merge"
 // or "COMBINE" in http://www.cs.umd.edu/~samir/498/kh.pdf
-func (s *Stream) merge(s1, s2 []tuple) gksummary {
+func merge(s1, s2 []tuple) gksummary {
 
 	var r []tuple
 
@@ -211,7 +211,7 @@ func (s *Stream) Finish() {
 	sort.Sort(&s.summary[0])
 
 	for i := 1; i < len(s.summary); i++ {
-		S = s.merge(S, s.summary[i])
+		S = merge(S, s.summary[i])
 	}
 }
 
