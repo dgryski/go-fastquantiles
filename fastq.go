@@ -1,6 +1,7 @@
 package fastq
 
 import (
+	"math"
 	"sort"
 )
 
@@ -24,8 +25,9 @@ type Stream struct {
 	b       int // block size
 }
 
-func New() *Stream {
-	return &Stream{}
+func New(n int) *Stream {
+	b := int(math.Floor(math.Log(epsilon*float64(n)) / epsilon))
+	return &Stream{summary: make([]gksummary, 1, 1), n: n, b: b}
 }
 
 func (s *Stream) Update(e float64) {
@@ -201,4 +203,38 @@ func (s *Stream) merge(s1, s2 []tuple) gksummary {
 
 	// all done
 	return r
+}
+
+// !! Must call Finish to allow processing queries
+func (s *Stream) Finish() {
+	S := s.summary[0]
+
+	for i := 1; i < len(s.summary); i++ {
+		S = s.merge(S, s.summary[i])
+	}
+}
+
+// GK query
+func (s *Stream) Query(q float64) float64 {
+
+	// convert quantile to rank
+
+	r := int(q * float64(s.n))
+
+	var rmin int
+
+	for _, t := range s.summary[0] {
+
+		rmin += t.g
+		rmax := rmin + t.delta
+
+		if r-rmin <= int(epsilon*float64(s.n)) && rmax-r <= int(epsilon*float64(s.n)) {
+			return t.v
+		}
+	}
+
+	// panic("not reached")
+
+	return 0
+
 }
