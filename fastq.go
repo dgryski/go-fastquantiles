@@ -49,12 +49,7 @@ func (s *Stream) Update(e float64) {
 	sc := prune(s.summary[0], (s.b+1)/2+1)
 	s.summary[0] = s.summary[0][:0] // empty
 
-	for k := 1; k <= len(s.summary); k++ {
-		// two versions of empty
-		if s.summary[k] == nil {
-			s.summary = append(s.summary, sc)
-			return
-		}
+	for k := 1; k < len(s.summary); k++ {
 
 		if len(s.summary[k]) == 0 {
 			/* --------------------------------------
@@ -76,6 +71,10 @@ func (s *Stream) Update(e float64) {
 
 		s.summary[k] = s.summary[k][:0] // Re-initialize
 	}
+
+	// fell off the end of our loop -- no more s.summary entries
+	s.summary = append(s.summary, sc)
+
 }
 
 // From http://www.mathcs.emory.edu/~cheung/Courses/584-StreamDB/Syllabus/08-Quantile/Greenwald-D.html "Prune"
