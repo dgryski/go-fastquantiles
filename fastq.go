@@ -209,6 +209,8 @@ func (s *Stream) merge(s1, s2 []tuple) gksummary {
 func (s *Stream) Finish() {
 	S := s.summary[0]
 
+	sort.Sort(&s.summary[0])
+
 	for i := 1; i < len(s.summary); i++ {
 		S = s.merge(S, s.summary[i])
 	}
