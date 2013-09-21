@@ -8,8 +8,8 @@ const epsilon = 0.01
 
 type tuple struct {
 	v     float64
-	g     float64
-	delta float64
+	g     int
+	delta int
 }
 
 type gksummary []tuple
@@ -87,8 +87,7 @@ func prune(sc gksummary, b int) gksummary {
 // return the tuple containing rank 'r' in summary
 func lookupRank(summary gksummary, r int) tuple {
 
-	var rmin float64
-	rf := float64(r)
+	var rmin int
 
 	n := len(summary)
 
@@ -96,7 +95,8 @@ func lookupRank(summary gksummary, r int) tuple {
 		rmin += t.g
 		rmax := rmin + t.delta
 
-		if rf-rmin <= epsilon*float64(n) && rmax-rf <= epsilon*float64(n) {
+		// FIXME: epsilon? 2*epsilon?
+		if r-rmin <= int(epsilon*float64(n)) && rmax-r <= int(epsilon*float64(n)) {
 			return t
 		}
 	}
