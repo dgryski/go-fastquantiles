@@ -124,7 +124,7 @@ func merge(s1, s2 []tuple) gksummary {
 	rmin2 := 0
 	rmax2 := 1
 
-	rmin := 1
+	rmin := 0
 	// merge sort s1, s2 on 'v'
 	for i1 < len(s1) && i2 < len(s2) {
 
@@ -136,9 +136,13 @@ func merge(s1, s2 []tuple) gksummary {
 
 			elt := s1[i1]
 			rmin1 += elt.g
-			rmax1 = elt.g + elt.delta
+			rmax1 = rmin2 + elt.delta
 
-			elt.g = rmin1 + rmin2 - rmin
+			if rmin2 != 0 {
+				elt.g = rmin1 + rmin2 - rmin
+			} else {
+				elt.g = rmin1
+			}
 			rmin += elt.g
 
 			rmaxyt := rmin2 + s2[i2].g + s2[i2].delta
@@ -152,9 +156,13 @@ func merge(s1, s2 []tuple) gksummary {
 
 			elt := s2[i2]
 			rmin2 += elt.g
-			rmax2 = elt.g + elt.delta
+			rmax2 = rmin2 + elt.delta
 
-			elt.g = rmin2 + rmin1 - rmin
+			if rmin1 != 0 {
+				elt.g = rmin2 + rmin1 - rmin
+			} else {
+				elt.g = rmin2
+			}
 			rmin += elt.g
 
 			rmaxyt := rmin1 + s1[i1].g + s1[i1].delta
@@ -173,12 +181,12 @@ func merge(s1, s2 []tuple) gksummary {
 	for ; i1 < len(s1); i1++ {
 		elt := s1[i1]
 		rmin1 += elt.g
-		rmax1 = elt.g + elt.delta
+		rmax1 = rmin1 + elt.delta
 
 		elt.g = rmin1 + rmin2 - rmin
 		rmin += elt.g
 
-		elt.delta = (rmax1 + rmax2 - 1) - rmin
+		elt.delta = (rmax1 + rmax2) - rmin
 
 		r = append(r, elt)
 
@@ -186,14 +194,14 @@ func merge(s1, s2 []tuple) gksummary {
 	}
 
 	for ; i2 < len(s2); i2++ {
-		elt := s2[i1]
+		elt := s2[i2]
 		rmin2 += elt.g
-		rmax2 = elt.g + elt.delta
+		rmax2 = rmin2 + elt.delta
 
 		elt.g = rmin2 + rmin1 - rmin
 		rmin += elt.g
 
-		elt.delta = (rmax2 + rmax1 - 1) - rmin
+		elt.delta = (rmax2 + rmax1) - rmin
 
 		r = append(r, elt)
 
