@@ -83,7 +83,7 @@ func prune(sc gksummary, b int) gksummary {
 	var r gksummary // result quantile summary
 
 	for i := 0; i < b; i++ {
-		rank := int(1.0 / float64(b) * float64(len(sc)))
+		rank := int(float64(len(sc)) * float64(i) / float64(b))
 		v := lookupRank(sc, rank)
 		r = append(r, v) // add only if unique?
 	}
