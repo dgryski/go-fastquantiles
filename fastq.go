@@ -111,34 +111,94 @@ func lookupRank(summary gksummary, r int) tuple {
 }
 
 // From http://www.mathcs.emory.edu/~cheung/Courses/584-StreamDB/Syllabus/08-Quantile/Greenwald-D.html "Merge"
+// or "COMBINE" in http://www.cs.umd.edu/~samir/498/kh.pdf
 func (s *Stream) merge(s1, s2 []tuple) gksummary {
 
 	var r []tuple
 
 	var i1, i2 int
 
+	rmin1 := 0
+	rmax1 := 1
+	rmin2 := 0
+	rmax2 := 1
+
+	rmin := 1
 	// merge sort s1, s2 on 'v'
 	for i1 < len(s1) && i2 < len(s2) {
+
+		// This section is very tricky because the papers and course notes
+		// talk in terms of r_min and r_max, but the data structure
+		// contains g and delta which let you _calculate_ r_min and r_max
+
 		if s1[i1].v <= s2[i2].v {
-			r = append(r, s1[i1])
+
+			elt := s1[i1]
+			rmin1 += elt.g
+			rmax1 = elt.g + elt.delta
+
+			elt.g = rmin1 + rmin2 - rmin
+			rmin += elt.g
+
+			rmaxyt := rmin2 + s2[i2].g + s2[i2].delta
+
+			elt.delta = (rmax1 + rmaxyt - 1) - rmin
+
+			r = append(r, elt)
+
 			i1++
 		} else {
-			r = append(r, s2[i2])
+
+			elt := s2[i2]
+			rmin2 += elt.g
+			rmax2 = elt.g + elt.delta
+
+			elt.g = rmin2 + rmin1 - rmin
+			rmin += elt.g
+
+			rmaxyt := rmin1 + s1[i1].g + s1[i1].delta
+
+			elt.delta = (rmax2 + rmaxyt - 1) - rmin
+
+			r = append(r, elt)
+
 			i2++
 		}
 	}
 
-	// copy remaining entries from s1 or s2 (or neither)
-	switch {
-	case i1 < len(s1):
-		r = append(r, s1[i1:]...)
-	case i2 < len(s2):
-		r = append(r, s2[i2:]...)
+	// only one of these for-loops will ever happen
+	// FIXME: combine into single routine somehow (aliasing..)
+
+	for ; i1 < len(s1); i1++ {
+		elt := s1[i1]
+		rmin1 += elt.g
+		rmax1 = elt.g + elt.delta
+
+		elt.g = rmin1 + rmin2 - rmin
+		rmin += elt.g
+
+		elt.delta = (rmax1 + rmax2 - 1) - rmin
+
+		r = append(r, elt)
+
+		i1++
 	}
 
-	// TODO: assign rmin/rmax values
+	for ; i2 < len(s2); i2++ {
+		elt := s2[i1]
+		rmin2 += elt.g
+		rmax2 = elt.g + elt.delta
+
+		elt.g = rmin2 + rmin1 - rmin
+		rmin += elt.g
+
+		elt.delta = (rmax2 + rmax1 - 1) - rmin
+
+		r = append(r, elt)
+
+		i2++
+	}
 
 	// all done
 	return r
-
 }
