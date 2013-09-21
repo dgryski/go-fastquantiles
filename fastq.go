@@ -48,6 +48,12 @@ func (s *Stream) Update(e float64) {
 	s.summary[0] = s.summary[0][:0] // empty
 
 	for k := 1; k <= len(s.summary); k++ {
+		// two versions of empty
+		if s.summary[k] == nil {
+			s.summary = append(s.summary, sc)
+			return
+		}
+
 		if len(s.summary[k]) == 0 {
 			/* --------------------------------------
 			   Empty: put compressed summary in sk
