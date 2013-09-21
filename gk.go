@@ -5,14 +5,6 @@ import (
 	"math"
 )
 
-//const epsilon = 0.01
-
-type gktuple struct {
-	v     float64
-	g     float64
-	delta float64
-}
-
 type GKStream struct {
 	summary *list.List
 	n       int
@@ -24,13 +16,13 @@ func NewGK() *GKStream {
 
 func (s *GKStream) Insert(v float64) {
 
-	value := &gktuple{v, 1, 0}
+	value := &tuple{v, 1, 0}
 
 	var idx int
 	var elt *list.Element
 
 	for elt = s.summary.Front(); elt != nil; elt = elt.Next() {
-		t := elt.Value.(*gktuple)
+		t := elt.Value.(*tuple)
 		if v < t.v {
 			break
 		}
@@ -41,7 +33,7 @@ func (s *GKStream) Insert(v float64) {
 		// the new element is the new min or max
 		value.delta = 0
 	} else {
-		value.delta = math.Floor(2 * epsilon * float64(s.n))
+		value.delta = int(math.Floor(2 * epsilon * float64(s.n)))
 	}
 
 	if idx == 0 {
@@ -62,9 +54,9 @@ func (s *GKStream) compress() {
 
 	for elt := s.summary.Front(); elt.Next() != nil; {
 		next := elt.Next()
-		t := elt.Value.(*gktuple)
-		nt := next.Value.(*gktuple)
-		if t.g+nt.g+nt.delta <= math.Floor(2*epsilon*float64(s.n)) {
+		t := elt.Value.(*tuple)
+		nt := next.Value.(*tuple)
+		if t.g+nt.g+nt.delta <= int(math.Floor(2*epsilon*float64(s.n))) {
 			nt.g += t.g
 			s.summary.Remove(elt)
 		}
@@ -76,18 +68,18 @@ func (s *GKStream) Query(q float64) float64 {
 
 	// convert quantile to rank
 
-	r := q * float64(s.n)
+	r := int(q * float64(s.n))
 
-	var rmin float64
+	var rmin int
 
 	for elt := s.summary.Front(); elt.Next() != nil; elt = elt.Next() {
 
-		t := elt.Value.(*gktuple)
+		t := elt.Value.(*tuple)
 
 		rmin += t.g
 		rmax := rmin + t.delta
 
-		if r-rmin <= epsilon*float64(s.n) && rmax-r <= epsilon*float64(s.n) {
+		if r-rmin <= int(epsilon*float64(s.n)) && rmax-r <= int(epsilon*float64(s.n)) {
 			return t.v
 		}
 	}
