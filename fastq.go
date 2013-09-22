@@ -136,7 +136,7 @@ func merge(s1, s2 []tuple) gksummary {
 
 			elt := s1[i1]
 			rmin1 += elt.g
-			rmax1 = rmin2 + elt.delta
+			rmax1 = rmin1 + elt.delta
 
 			if rmin2 != 0 {
 				elt.g = rmin1 + rmin2 - rmin
