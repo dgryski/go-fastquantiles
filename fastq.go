@@ -85,17 +85,40 @@ func prune(sc gksummary, b int) gksummary {
 
 	var r gksummary // result quantile summary
 
+	fmt.Println("before prune: ", sc)
+
+	rmin := 0
+
 	for i := 0; i < b; i++ {
 		rank := int(float64(len(sc)) * float64(i) / float64(b))
 		v := lookupRank(sc, rank)
-		r = append(r, v) // add only if unique?
+
+		elt := tuple{v: v.v}
+
+		elt.g = v.rmin - rmin
+		rmin += elt.g
+
+		elt.delta = v.rmax - rmin
+
+		if r == nil || r[len(r)-1].v != v.v {
+			r = append(r, elt) // add only if unique?
+		}
 	}
 
+	fmt.Println(" after prune: ", r)
 	return r
 }
 
+type lookupResult struct {
+	v    float64
+	rmin int
+	rmax int
+}
+
 // return the tuple containing rank 'r' in summary
-func lookupRank(summary gksummary, r int) tuple {
+// combine this inline with prune(), otherwise we're O(n^2)
+// or over a channel?
+func lookupRank(summary gksummary, r int) lookupResult {
 
 	var rmin int
 
@@ -107,11 +130,11 @@ func lookupRank(summary gksummary, r int) tuple {
 
 		// FIXME: epsilon? 2*epsilon?
 		if r-rmin <= int(epsilon*float64(n)) && rmax-r <= int(epsilon*float64(n)) {
-			return t
+			return lookupResult{t.v, rmin, rmax}
 		}
 	}
 
-	return tuple{}
+	return lookupResult{}
 }
 
 // From http://www.mathcs.emory.edu/~cheung/Courses/584-StreamDB/Syllabus/08-Quantile/Greenwald-D.html "Merge"
