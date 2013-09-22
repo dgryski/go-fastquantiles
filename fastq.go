@@ -144,7 +144,7 @@ func merge(s1, s2 []tuple) gksummary {
 			if rmin2 != 0 {
 				elt.g = rmin1 + rmin2 - rmin
 			} else {
-				elt.g = rmin1
+				elt.g = rmin1 - rmin
 			}
 			rmin += elt.g
 
@@ -170,8 +170,9 @@ func merge(s1, s2 []tuple) gksummary {
 			if rmin1 != 0 {
 				elt.g = rmin2 + rmin1 - rmin
 			} else {
-				elt.g = rmin2
+				elt.g = rmin2 - rmin
 			}
+
 			rmin += elt.g
 
 			rmaxyt := rmin1 + s1[i1].g + s1[i1].delta
