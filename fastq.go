@@ -1,9 +1,12 @@
 package fastq
 
 import (
+	"fmt"
 	"math"
 	"sort"
 )
+
+var _ = fmt.Println
 
 const epsilon = 0.01
 
@@ -149,6 +152,12 @@ func merge(s1, s2 []tuple) gksummary {
 
 			elt.delta = (rmax1 + rmaxyt - 1) - rmin
 
+			if elt.delta < 0 {
+				fmt.Printf("yt: %d + %d + %d = %d\n", rmin2, s2[i2].g, s2[i2].delta, rmaxyt)
+				fmt.Printf("d: %d + %d -1 - %d = %d\n", rmax1, rmaxyt, rmin, elt.delta)
+				panic("s1 delta < 0")
+
+			}
 			r = append(r, elt)
 
 			i1++
@@ -169,6 +178,11 @@ func merge(s1, s2 []tuple) gksummary {
 
 			elt.delta = (rmax2 + rmaxyt - 1) - rmin
 
+			if elt.delta < 0 {
+				fmt.Printf("yt: %d + %d + %d = %d\n", rmin1, s1[i1].g, s1[i1].delta, rmaxyt)
+				fmt.Printf("d: %d + %d -1 - %d = %d\n", rmax2, rmaxyt, rmin, elt.delta)
+				panic("s2 delta < 0")
+			}
 			r = append(r, elt)
 
 			i2++
