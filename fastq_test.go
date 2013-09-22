@@ -34,6 +34,7 @@ func TestMerge(t *testing.T) {
 				{5, 1, 0},
 				{5, 1, 0},
 				{5, 1, 0},
+				{6, 1, 0},
 			},
 
 			[]tuple{
