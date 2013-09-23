@@ -205,6 +205,9 @@ func merge(s1, s2 gksummary) gksummary {
 		// talk in terms of r_min and r_max, but the data structure
 		// contains g and delta which let you _calculate_ r_min and r_max
 
+		fmt.Printf("i1=%v i2=%v\nr=%v\n", s1[i1], s2[i2], r)
+		fmt.Printf("rmin1=%d rmax1=%d rmin2=%d rmax2=%d rmin=%d\n", rmin1, rmax1, rmin2, rmax2, rmin)
+
 		if s1[i1].v <= s2[i2].v {
 
 			elt := s1[i1]
@@ -216,7 +219,9 @@ func merge(s1, s2 gksummary) gksummary {
 			} else {
 				elt.g = rmin1 - rmin
 			}
-			if elt.g < 0 {
+			fmt.Printf("rmin1=%d rmin2=%d rmin=%d\n", rmin1, rmin2, rmin)
+			if elt.g <= 0 {
+				fmt.Println("g=", elt.g)
 				panic("s1 g < 0")
 			}
 			rmin += elt.g
@@ -245,7 +250,9 @@ func merge(s1, s2 gksummary) gksummary {
 			} else {
 				elt.g = rmin2 - rmin
 			}
-			if elt.g < 0 {
+			fmt.Printf("rmin1=%d rmin2=%d rmin=%d\n", rmin1, rmin2, rmin)
+			if elt.g <= 0 {
+				fmt.Println("g=", elt.g)
 				panic("s2 g < 0")
 			}
 
@@ -302,6 +309,7 @@ func merge(s1, s2 gksummary) gksummary {
 	// all done
 	fmt.Printf(" after merge : len(r)=%d (n=%d) r=%v\n", r.Len(), r.Size(), r)
 	r.mergeValues()
+	fmt.Printf(" after mergev: len(r)=%d (n=%d) r=%v\n", r.Len(), r.Size(), r)
 	return r
 }
 
