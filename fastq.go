@@ -143,9 +143,15 @@ func prune(sc gksummary, b int) gksummary {
 
 		elt.delta = v.rmax - rmin
 
-		if r == nil || r[len(r)-1].v != v.v {
-			r = append(r, elt) // add only if unique?
+		// not sure if this is right. merge or ignore?
+		if r != nil && r[len(r)-1].v == elt.v {
+			e := r[len(r)-1]
+			e.delta += elt.g + elt.delta
+			r[len(r)-1] = e
+			continue
 		}
+
+		r = append(r, elt)
 	}
 
 	fmt.Printf(" after prune : len(r)=%d (n=%d) r=%v\n", r.Len(), r.Size(), r)
