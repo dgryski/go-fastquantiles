@@ -312,6 +312,8 @@ func (s *Stream) Finish() {
 	for i := 1; i < len(s.summary); i++ {
 		S = merge(S, s.summary[i])
 	}
+
+	s.summary[0] = S
 }
 
 // GK query
