@@ -132,8 +132,8 @@ func prune(sc gksummary, b int) gksummary {
 
 	rmin := 0
 
-	for i := 0; i < b; i++ {
-		rank := int(float64(len(sc)) * float64(i) / float64(b))
+	for i := 0; i < (b + 1); i++ {
+		rank := int(float64(sc.Size()) * float64(i) / float64(b))
 		v := lookupRank(sc, rank)
 
 		elt := tuple{v: v.v}
