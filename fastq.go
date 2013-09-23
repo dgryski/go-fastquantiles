@@ -169,19 +169,17 @@ func lookupRank(summary gksummary, r int) lookupResult {
 
 	var rmin int
 
-	n := len(summary)
-
 	for _, t := range summary {
 		rmin += t.g
 		rmax := rmin + t.delta
 
-		// FIXME: epsilon? 2*epsilon?
-		if r-rmin <= int(epsilon*float64(n)) && rmax-r <= int(epsilon*float64(n)) {
-			return lookupResult{t.v, rmin, rmax}
+		// this is not entirely right
+		if rmin <= r && rmax >= r || rmin >= r {
+			return lookupResult{v: t.v, rmin: rmin, rmax: rmax}
 		}
 	}
 
-	return lookupResult{}
+	panic("not found")
 }
 
 // From http://www.mathcs.emory.edu/~cheung/Courses/584-StreamDB/Syllabus/08-Quantile/Greenwald-D.html "Merge"
@@ -334,13 +332,11 @@ func (s *Stream) Query(q float64) float64 {
 		rmin += t.g
 		rmax := rmin + t.delta
 
-		if r-rmin <= int(epsilon*float64(s.n)) && rmax-r <= int(epsilon*float64(s.n)) {
+		// this is not entirely right
+		if rmin <= r && rmax >= r || rmin >= r {
 			return t.v
 		}
 	}
 
-	// panic("not reached")
-
-	return 0
-
+	panic("not reached")
 }
