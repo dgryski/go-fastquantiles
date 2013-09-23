@@ -22,6 +22,47 @@ func (gk *gksummary) Len() int           { return len(*gk) }
 func (gk *gksummary) Less(i, j int) bool { return (*gk)[i].v < (*gk)[j].v }
 func (gk *gksummary) Swap(i, j int)      { (*gk)[i], (*gk)[j] = (*gk)[j], (*gk)[i] }
 
+func (gk *gksummary) Size() int {
+
+	var n int
+
+	for _, t := range *gk {
+		n += t.g
+	}
+
+	return n
+
+}
+
+// reduces the number of elements but doesn't lose precision
+// value merging: from Appendig A of http://www.cis.upenn.edu/~mbgreen/papers/pods04.pdf
+func (gk *gksummary) mergeValues() {
+
+	fmt.Println("before: size=", gk.Size(), gk)
+
+	var missing int
+
+	var dst int
+
+	for src := 1; src < len(*gk); src++ {
+		if (*gk)[dst].v == (*gk)[src].v {
+			(*gk)[dst].delta += (*gk)[src].g + (*gk)[src].delta
+			missing += (*gk)[src].g
+			continue
+		}
+
+		dst++
+		// add in the extra 'g' for the elements we removed
+		(*gk)[src].g += missing
+		missing = 0
+		(*gk)[dst] = (*gk)[src]
+	}
+
+	(*gk) = (*gk)[:dst+1]
+
+	fmt.Println(" after: size=", gk.Size(), gk)
+}
+
 type Stream struct {
 	summary []gksummary
 	n       int
@@ -48,6 +89,8 @@ func (s *Stream) Update(e float64) {
 	   ----------------------------------- */
 
 	sort.Sort(&s.summary[0])
+
+	s.summary[0].mergeValues()
 
 	sc := prune(s.summary[0], (s.b+1)/2+1)
 	s.summary[0] = s.summary[0][:0] // empty
