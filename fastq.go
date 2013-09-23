@@ -143,11 +143,9 @@ func prune(sc gksummary, b int) gksummary {
 
 		elt.delta = v.rmax - rmin
 
-		// not sure if this is right. merge or ignore?
+		fmt.Printf("rank=%d v=%v elt=%v\n", rank, v, elt)
 		if r != nil && r[len(r)-1].v == elt.v {
-			e := r[len(r)-1]
-			e.delta += elt.g + elt.delta
-			r[len(r)-1] = e
+			// ignore if we've already seen it
 			continue
 		}
 
