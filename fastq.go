@@ -301,6 +301,7 @@ func merge(s1, s2 gksummary) gksummary {
 
 	// all done
 	fmt.Printf(" after merge : len(r)=%d (n=%d) r=%v\n", r.Len(), r.Size(), r)
+	r.mergeValues()
 	return r
 }
 
