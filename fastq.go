@@ -128,7 +128,7 @@ func prune(sc gksummary, b int) gksummary {
 
 	var r gksummary // result quantile summary
 
-	fmt.Println("before prune: ", sc)
+	fmt.Printf("before prune: len(sc)=%d (n=%d) sc=%v\n", len(sc), sc.Size(), sc)
 
 	rmin := 0
 
@@ -148,7 +148,7 @@ func prune(sc gksummary, b int) gksummary {
 		}
 	}
 
-	fmt.Println(" after prune: ", r)
+	fmt.Printf(" after prune : len(r)=%d (n=%d) r=%v\n", r.Len(), r.Size(), r)
 	return r
 }
 
@@ -182,9 +182,12 @@ func lookupRank(summary gksummary, r int) lookupResult {
 
 // From http://www.mathcs.emory.edu/~cheung/Courses/584-StreamDB/Syllabus/08-Quantile/Greenwald-D.html "Merge"
 // or "COMBINE" in http://www.cs.umd.edu/~samir/498/kh.pdf
-func merge(s1, s2 []tuple) gksummary {
+func merge(s1, s2 gksummary) gksummary {
 
-	var r []tuple
+	fmt.Printf("before merge: len(s1)=%d (n=%d) s1=%v\n", s1.Len(), s1.Size(), s1)
+	fmt.Printf("before merge: len(s2)=%d (n=%d) s2=%v\n", s2.Len(), s2.Size(), s2)
+
+	var r gksummary
 
 	var i1, i2 int
 
@@ -296,6 +299,7 @@ func merge(s1, s2 []tuple) gksummary {
 	}
 
 	// all done
+	fmt.Printf(" after merge : len(r)=%d (n=%d) r=%v\n", r.Len(), r.Size(), r)
 	return r
 }
 
