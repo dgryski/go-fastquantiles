@@ -193,9 +193,9 @@ func merge(s1, s2 gksummary) gksummary {
 	var i1, i2 int
 
 	rmin1 := 0
-	rmax1 := 1
 	rmin2 := 0
-	rmax2 := 1
+
+	var rmax1, rmax2 int
 
 	rmin := 0
 	// merge sort s1, s2 on 'v'
@@ -205,69 +205,111 @@ func merge(s1, s2 gksummary) gksummary {
 		// talk in terms of r_min and r_max, but the data structure
 		// contains g and delta which let you _calculate_ r_min and r_max
 
-		fmt.Printf("i1=%v i2=%v\nr=%v\n", s1[i1], s2[i2], r)
-		fmt.Printf("rmin1=%d rmax1=%d rmin2=%d rmax2=%d rmin=%d\n", rmin1, rmax1, rmin2, rmax2, rmin)
-
+		// ugg, these two blocks are going to get out of sync..
 		if s1[i1].v <= s2[i2].v {
 
-			elt := s1[i1]
-			rmin1 += elt.g
-			rmax1 = rmin1 + elt.delta
+			rmin1 += s1[i1].g
+			rmax1 = rmin1 + s1[i1].delta
 
-			if rmin2 != 0 {
-				elt.g = rmin1 + rmin2 - rmin
+			xr := s1[i1]
+			xrRmin := rmin1
+			xrRmax := xrRmin + xr.delta
+
+			zi := tuple{v: xr.v}
+
+			var ysIdx int
+			ysRmin := rmin2
+			for ysIdx = i2 - 1; ysIdx >= 0 && xr.v == s2[ysIdx].v; ysIdx-- {
+			}
+			if ysIdx >= 0 {
+				ysRmin -= s2[ysIdx].g
+			}
+
+			var ziRmin int
+			if ysIdx >= 0 {
+				ziRmin = xrRmin + ysRmin
 			} else {
-				elt.g = rmin1 - rmin
+				ziRmin = xrRmin
 			}
-			fmt.Printf("rmin1=%d rmin2=%d rmin=%d\n", rmin1, rmin2, rmin)
-			if elt.g <= 0 {
-				fmt.Println("g=", elt.g)
-				panic("s1 g < 0")
+
+			var ytIdx int
+			ytRmin := rmin2
+			for ytIdx = i2; ytIdx < len(s2) && xr.v == s2[ytIdx].v; ytIdx++ {
+				ytRmin += s2[ytIdx].g
 			}
-			rmin += elt.g
 
-			rmaxyt := rmin2 + s2[i2].g + s2[i2].delta
-
-			elt.delta = (rmax1 + rmaxyt - 1) - rmin
-
-			if elt.delta < 0 {
-				fmt.Printf("yt: %d + %d + %d = %d\n", rmin2, s2[i2].g, s2[i2].delta, rmaxyt)
-				fmt.Printf("d: %d + %d -1 - %d = %d\n", rmax1, rmaxyt, rmin, elt.delta)
-				panic("s1 delta < 0")
-
+			if ytIdx < len(s2) {
+				ytRmin += s2[ytIdx].g
 			}
-			r = append(r, elt)
+
+			var ziRmax int
+			if ytIdx < len(s2) {
+				ytRmax := ytRmin + s2[ytIdx].delta
+				ziRmax = xrRmax + ytRmax - 1
+			} else if ysIdx >= 0 {
+				ziRmax = xrRmax + ysRmin + s2[ysIdx].delta
+			} else {
+				ziRmax = xrRmax
+			}
+
+			zi.delta = ziRmax - ziRmin
+			zi.g = ziRmin - rmin
+
+			rmin += zi.g
+			r = append(r, zi)
 
 			i1++
 		} else {
 
-			elt := s2[i2]
-			rmin2 += elt.g
-			rmax2 = rmin2 + elt.delta
+			rmin2 += s2[i2].g
+			rmax2 = rmin2 + s2[i2].delta
 
-			if rmin1 != 0 {
-				elt.g = rmin2 + rmin1 - rmin
+			xr := s2[i2]
+			xrRmin := rmin2
+			xrRmax := xrRmin + xr.delta
+
+			zi := tuple{v: xr.v}
+
+			var ysIdx int
+			ysRmin := rmin1
+			for ysIdx = i1 - 1; ysIdx >= 0 && xr.v == s1[ysIdx].v; ysIdx-- {
+			}
+			if ysIdx >= 0 {
+				ysRmin -= s1[ysIdx].g
+			}
+
+			var ziRmin int
+			if ysIdx >= 0 {
+				ziRmin = xrRmin + ysRmin
 			} else {
-				elt.g = rmin2 - rmin
-			}
-			fmt.Printf("rmin1=%d rmin2=%d rmin=%d\n", rmin1, rmin2, rmin)
-			if elt.g <= 0 {
-				fmt.Println("g=", elt.g)
-				panic("s2 g < 0")
+				ziRmin = xrRmin
 			}
 
-			rmin += elt.g
-
-			rmaxyt := rmin1 + s1[i1].g + s1[i1].delta
-
-			elt.delta = (rmax2 + rmaxyt - 1) - rmin
-
-			if elt.delta < 0 {
-				fmt.Printf("yt: %d + %d + %d = %d\n", rmin1, s1[i1].g, s1[i1].delta, rmaxyt)
-				fmt.Printf("d: %d + %d -1 - %d = %d\n", rmax2, rmaxyt, rmin, elt.delta)
-				panic("s2 delta < 0")
+			var ytIdx int
+			ytRmin := rmin1
+			for ytIdx = i1; ytIdx < len(s1) && xr.v == s1[ytIdx].v; ytIdx++ {
+				ytRmin += s1[ytIdx].g
 			}
-			r = append(r, elt)
+			if ytIdx < len(s1) {
+				ytRmin += s1[ytIdx].g
+			}
+
+			var ziRmax int
+			if ytIdx < len(s1) {
+				ytRmax := ytRmin + s1[ytIdx].delta
+				ziRmax = xrRmax + ytRmax - 1
+			} else if ysIdx >= 0 {
+				ziRmax = xrRmax + ysRmin + s1[ysIdx].delta
+			} else {
+				ziRmax = xrRmax
+			}
+
+			zi.delta = ziRmax - ziRmin
+			zi.g = ziRmin - rmin
+
+			fmt.Printf("rmin = %d += %d\n", rmin, zi.g)
+			rmin += zi.g
+			r = append(r, zi)
 
 			i2++
 		}
@@ -279,7 +321,7 @@ func merge(s1, s2 gksummary) gksummary {
 	for ; i1 < len(s1); i1++ {
 		elt := s1[i1]
 		rmin1 += elt.g
-		rmax1 = rmin1 + elt.delta
+		rmax1 := rmin1 + elt.delta
 
 		elt.g = rmin1 + rmin2 - rmin
 		rmin += elt.g
@@ -294,7 +336,7 @@ func merge(s1, s2 gksummary) gksummary {
 	for ; i2 < len(s2); i2++ {
 		elt := s2[i2]
 		rmin2 += elt.g
-		rmax2 = rmin2 + elt.delta
+		rmax2 := rmin2 + elt.delta
 
 		elt.g = rmin2 + rmin1 - rmin
 		rmin += elt.g
