@@ -307,7 +307,6 @@ func merge(s1, s2 gksummary) gksummary {
 			zi.delta = ziRmax - ziRmin
 			zi.g = ziRmin - rmin
 
-			fmt.Printf("rmin = %d += %d\n", rmin, zi.g)
 			rmin += zi.g
 			r = append(r, zi)
 
