@@ -180,12 +180,19 @@ func lookupRank(summary gksummary, r int) lookupResult {
 
 	var rmin int
 
-	for _, t := range summary {
+	for i, t := range summary {
 		rmin += t.g
 		rmax := rmin + t.delta
 
+		if i+1 == len(summary) {
+			return lookupResult{v: t.v, rmin: rmin, rmax: rmax}
+
+		}
+
+		rmin_next := rmin + summary[i+1].g
+
 		// this is not entirely right
-		if rmin <= r && rmax >= r || rmin >= r {
+		if rmin <= r && r <= rmin_next {
 			return lookupResult{v: t.v, rmin: rmin, rmax: rmax}
 		}
 	}
@@ -383,15 +390,21 @@ func (s *Stream) Query(q float64) float64 {
 
 	r := int(q * float64(s.n))
 
+	fmt.Println("querying rank=", r, "of", s.n, "items")
+	fmt.Println("querying s0.Size()=", s.summary[0].Size())
+
 	var rmin int
 
-	for _, t := range s.summary[0] {
+	for i, t := range s.summary[0] {
+
+		if i+1 == len(s.summary[0]) {
+			return t.v
+		}
 
 		rmin += t.g
-		rmax := rmin + t.delta
+		rmin_next := rmin + s.summary[0][i+1].g
 
-		// this is not entirely right
-		if rmin <= r && rmax >= r || rmin >= r {
+		if rmin <= r && r <= rmin_next {
 			return t.v
 		}
 	}
