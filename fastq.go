@@ -74,6 +74,14 @@ func New(n int) *Stream {
 	return &Stream{summary: make([]gksummary, 1, 1), n: n, b: b}
 }
 
+func (s *Stream) Dump() {
+
+	for i, sl := range s.summary {
+		fmt.Printf("summary[%d]=%d\n", i, sl.Size())
+	}
+
+}
+
 func (s *Stream) Update(e float64) {
 
 	// From http://www.mathcs.emory.edu/~cheung/Courses/584-StreamDB/Syllabus/08-Quantile/Zhang.html
@@ -102,8 +110,10 @@ func (s *Stream) Update(e float64) {
 			   Empty: put compressed summary in sk
 			   -------------------------------------- */
 
+			fmt.Println("setting", k, "to ", sc.Size())
 			s.summary[k] = sc // Store it
-			return            // Done
+			s.Dump()
+			return // Done
 		}
 
 		/* --------------------------------------
@@ -120,6 +130,8 @@ func (s *Stream) Update(e float64) {
 
 	// fell off the end of our loop -- no more s.summary entries
 	s.summary = append(s.summary, sc)
+	fmt.Println("fell off the end:", sc.Size())
+	s.Dump()
 
 }
 
@@ -342,7 +354,7 @@ func merge(s1, s2 gksummary) gksummary {
 	// all done
 	fmt.Printf(" after merge : len(r)=%d (n=%d) r=%v\n", r.Len(), r.Size(), r)
 	r.mergeValues()
-	fmt.Printf(" after mergev: len(r)=%d (n=%d) r=%v\n", r.Len(), r.Size(), r)
+	//	fmt.Printf(" after mergev: len(r)=%d (n=%d) r=%v\n", r.Len(), r.Size(), r)
 	return r
 }
 
@@ -350,10 +362,15 @@ func merge(s1, s2 gksummary) gksummary {
 func (s *Stream) Finish() {
 	S := s.summary[0]
 
+	s.Dump()
+
 	sort.Sort(&s.summary[0])
+
+	fmt.Println("size[0]=", S.Size())
 
 	for i := 1; i < len(s.summary); i++ {
 		S = merge(S, s.summary[i])
+		fmt.Printf("size[%d]=%d\n", i, S.Size())
 	}
 
 	s.summary[0] = S
