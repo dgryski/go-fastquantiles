@@ -188,6 +188,13 @@ func merge(s1, s2 gksummary) gksummary {
 	fmt.Printf("before merge: len(s1)=%d (n=%d) s1=%v\n", s1.Len(), s1.Size(), s1)
 	fmt.Printf("before merge: len(s2)=%d (n=%d) s2=%v\n", s2.Len(), s2.Size(), s2)
 
+	if len(s1) == 0 {
+		return s2
+	}
+	if len(s2) == 0 {
+		return s1
+	}
+
 	var r gksummary
 
 	var i1, i2 int
@@ -205,24 +212,35 @@ func merge(s1, s2 gksummary) gksummary {
 		// talk in terms of r_min and r_max, but the data structure
 		// contains g and delta which let you _calculate_ r_min and r_max
 
-		// ugg, these two blocks are going to get out of sync..
-		if s1[i1].v <= s2[i2].v {
+		if s1[i1].v == s2[i2].v {
+			s1[i1].delta += s2[i2].delta
+			if i2+1 < len(s2) {
+				s2[i2+1].g += s2[i2].g
+			}
+			s2[i2].g = 0 // mark as skip
+			i2++
+			continue
+		}
 
+		// ugg, these two blocks are going to get out of sync..
+		if s1[i1].v < s2[i2].v {
+
+			// rmin/rmax of s1[i1].v
 			rmin1 += s1[i1].g
 			rmax1 = rmin1 + s1[i1].delta
 
+			// use notation from paper
 			xr := s1[i1]
 			xrRmin := rmin1
 			xrRmax := xrRmin + xr.delta
 
 			zi := tuple{v: xr.v}
 
-			var ysIdx int
-			ysRmin := rmin2
-			for ysIdx = i2 - 1; ysIdx >= 0 && xr.v == s2[ysIdx].v; ysIdx-- {
-			}
-			if ysIdx >= 0 {
-				ysRmin -= s2[ysIdx].g
+			// find y_s with y_s < x_r
+			ysIdx := i2 - 1 // must start at i2-1, since if s2[i2] was smaller it would have been processed already
+			ysRmin := rmin2 // rmin2 is sum(s2[0:i2]), so == rmin(s2[ysIdx])
+			for ysIdx >= 0 && s2[ysIdx].g == 0 {
+				ysIdx--
 			}
 
 			var ziRmin int
@@ -232,25 +250,12 @@ func merge(s1, s2 gksummary) gksummary {
 				ziRmin = xrRmin
 			}
 
-			var ytIdx int
-			ytRmin := rmin2
-			for ytIdx = i2; ytIdx < len(s2) && xr.v == s2[ytIdx].v; ytIdx++ {
-				ytRmin += s2[ytIdx].g
-			}
-
-			if ytIdx < len(s2) {
-				ytRmin += s2[ytIdx].g
-			}
+			ytIdx := i2
+			ytRmin := rmin2 + s2[ytIdx].g
 
 			var ziRmax int
-			if ytIdx < len(s2) {
-				ytRmax := ytRmin + s2[ytIdx].delta
-				ziRmax = xrRmax + ytRmax - 1
-			} else if ysIdx >= 0 {
-				ziRmax = xrRmax + ysRmin + s2[ysIdx].delta
-			} else {
-				ziRmax = xrRmax
-			}
+			ytRmax := ytRmin + s2[ytIdx].delta
+			ziRmax = xrRmax + ytRmax - 1
 
 			zi.delta = ziRmax - ziRmin
 			zi.g = ziRmin - rmin
@@ -259,24 +264,23 @@ func merge(s1, s2 gksummary) gksummary {
 			r = append(r, zi)
 
 			i1++
-		} else {
 
+		} else if s2[i2].v < s1[i1].v {
+
+			// rmin/rmax of s2[i1].v (current element)
 			rmin2 += s2[i2].g
 			rmax2 = rmin2 + s2[i2].delta
 
+			// use notation from paper
 			xr := s2[i2]
 			xrRmin := rmin2
 			xrRmax := xrRmin + xr.delta
 
 			zi := tuple{v: xr.v}
 
-			var ysIdx int
-			ysRmin := rmin1
-			for ysIdx = i1 - 1; ysIdx >= 0 && xr.v == s1[ysIdx].v; ysIdx-- {
-			}
-			if ysIdx >= 0 {
-				ysRmin -= s1[ysIdx].g
-			}
+			// find y_s with y_s < x_r
+			ysIdx := i1 - 1 // must start at i1-1, since if s1[i1] was smaller it would have been processed already
+			ysRmin := rmin1 // rmin1 is sum(s1[0:i1]), so == rmin(s1[ysIdx])
 
 			var ziRmin int
 			if ysIdx >= 0 {
@@ -285,24 +289,12 @@ func merge(s1, s2 gksummary) gksummary {
 				ziRmin = xrRmin
 			}
 
-			var ytIdx int
-			ytRmin := rmin1
-			for ytIdx = i1; ytIdx < len(s1) && xr.v == s1[ytIdx].v; ytIdx++ {
-				ytRmin += s1[ytIdx].g
-			}
-			if ytIdx < len(s1) {
-				ytRmin += s1[ytIdx].g
-			}
+			ytIdx := i1
+			ytRmin := rmin1 + s1[ytIdx].g
 
 			var ziRmax int
-			if ytIdx < len(s1) {
-				ytRmax := ytRmin + s1[ytIdx].delta
-				ziRmax = xrRmax + ytRmax - 1
-			} else if ysIdx >= 0 {
-				ziRmax = xrRmax + ysRmin + s1[ysIdx].delta
-			} else {
-				ziRmax = xrRmax
-			}
+			ytRmax := ytRmin + s1[ytIdx].delta
+			ziRmax = xrRmax + ytRmax - 1
 
 			zi.delta = ziRmax - ziRmin
 			zi.g = ziRmin - rmin
