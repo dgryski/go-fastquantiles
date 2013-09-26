@@ -142,9 +142,13 @@ func prune(sc gksummary, b int) gksummary {
 
 	fmt.Printf("before prune: len(sc)=%d (n=%d) sc=%v\n", len(sc), sc.Size(), sc)
 
-	rmin := 0
+	v := lookupRank(sc, 1)
+	elt := tuple{v: v.v, g: v.rmin, delta: v.rmax - 1}
+	r = append(r, elt)
 
-	for i := 0; i < (b + 1); i++ {
+	rmin := elt.g
+	for i := 1; i < (b + 1); i++ {
+
 		rank := int(float64(sc.Size()) * float64(i) / float64(b))
 		v := lookupRank(sc, rank)
 
