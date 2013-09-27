@@ -172,7 +172,7 @@ func prune(sc gksummary, b int) gksummary {
 		r = append(r, elt)
 	}
 
-	fmt.Printf(" after prune : len(r)=%d (n=%d) r=%v\n", r.Len(), r.Size(), r)
+	fmt.Printf(" after prune : len(r)=%d (n=%d) r= %v\n", r.Len(), r.Size(), r)
 	return r
 }
 
