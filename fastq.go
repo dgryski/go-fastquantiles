@@ -24,13 +24,18 @@ func (gk *gksummary) Swap(i, j int)      { (*gk)[i], (*gk)[j] = (*gk)[j], (*gk)[
 
 func (gk *gksummary) Size() int {
 
-	var n int
+	l := len(*gk)
 
+	if l == 0 {
+		return 0
+	}
+
+	var n int
 	for _, t := range *gk {
 		n += t.g
 	}
 
-	return n
+	return n + (*gk)[l-1].delta
 
 }
 
