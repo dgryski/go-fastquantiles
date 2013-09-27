@@ -376,20 +376,18 @@ func merge(s1, s2 gksummary) gksummary {
 
 // !! Must call Finish to allow processing queries
 func (s *Stream) Finish() {
-	S := s.summary[0]
+	fmt.Println("Finish")
 	sort.Sort(&s.summary[0])
 	s.summary[0].mergeValues()
 
 	s.Dump()
 
-	fmt.Println("size[0]=", S.Size())
+	fmt.Println("size[0]=", s.summary[0].Size())
 
 	for i := 1; i < len(s.summary); i++ {
-		S = merge(S, s.summary[i])
-		fmt.Printf("size[%d]=%d\n", i, S.Size())
+		s.summary[0] = merge(s.summary[0], s.summary[i])
+		fmt.Printf("merged %d: size=%d\n", i, s.summary[0].Size())
 	}
-
-	s.summary[0] = S
 }
 
 // GK query
