@@ -201,7 +201,7 @@ func lookupRank(summary gksummary, r int) lookupResult {
 		rmin_next := rmin + summary[i+1].g
 
 		// this is not entirely right
-		if rmin <= r && r <= rmin_next {
+		if rmin <= r && r < rmin_next {
 			return lookupResult{v: t.v, rmin: rmin, rmax: rmax}
 		}
 	}
