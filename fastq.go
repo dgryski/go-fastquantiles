@@ -411,7 +411,7 @@ func (s *Stream) Query(q float64) float64 {
 		rmin += t.g
 		rmin_next := rmin + s.summary[0][i+1].g
 
-		if rmin <= r && r <= rmin_next {
+		if rmin <= r && r < rmin_next {
 			return t.v
 		}
 	}
