@@ -8,7 +8,7 @@ import (
 
 var _ = fmt.Println
 
-const epsilon = 0.01
+var epsilon = 0.01
 
 const debug = false
 
