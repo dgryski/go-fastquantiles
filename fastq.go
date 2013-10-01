@@ -10,6 +10,8 @@ var _ = fmt.Println
 
 const epsilon = 0.01
 
+const debug = false
+
 type tuple struct {
 	v     float64
 	g     int
@@ -43,7 +45,9 @@ func (gk *gksummary) Size() int {
 // value merging: from Appendig A of http://www.cis.upenn.edu/~mbgreen/papers/pods04.pdf
 func (gk *gksummary) mergeValues() {
 
-	fmt.Println("before: size=", gk.Size(), gk)
+	if debug {
+		fmt.Println("before: size=", gk.Size(), gk)
+	}
 
 	var missing int
 
@@ -65,7 +69,9 @@ func (gk *gksummary) mergeValues() {
 
 	(*gk) = (*gk)[:dst+1]
 
-	fmt.Println(" after: size=", gk.Size(), gk)
+	if debug {
+		fmt.Println(" after: size=", gk.Size(), gk)
+	}
 }
 
 type Stream struct {
@@ -81,6 +87,11 @@ func New(n int) *Stream {
 
 func (s *Stream) Dump() {
 
+	if !debug {
+		return
+	}
+
+	fmt.Printf("stream size: %d\n", s.n)
 	for i, sl := range s.summary {
 		fmt.Printf("summary[%d]=%d\n", i, sl.Size())
 	}
@@ -115,7 +126,9 @@ func (s *Stream) Update(e float64) {
 			   Empty: put compressed summary in sk
 			   -------------------------------------- */
 
-			fmt.Println("setting", k, "to ", sc.Size())
+			if debug {
+				fmt.Println("setting", k, "to ", sc.Size())
+			}
 			s.summary[k] = sc // Store it
 			s.Dump()
 			return // Done
@@ -135,7 +148,9 @@ func (s *Stream) Update(e float64) {
 
 	// fell off the end of our loop -- no more s.summary entries
 	s.summary = append(s.summary, sc)
-	fmt.Println("fell off the end:", sc.Size())
+	if debug {
+		fmt.Println("fell off the end:", sc.Size())
+	}
 	s.Dump()
 
 }
@@ -145,7 +160,9 @@ func prune(sc gksummary, b int) gksummary {
 
 	var r gksummary // result quantile summary
 
-	fmt.Printf("before prune: len(sc)=%d (n=%d) sc=%v\n", len(sc), sc.Size(), sc)
+	if debug {
+		fmt.Printf("before prune: len(sc)=%d (n=%d) sc=%v\n", len(sc), sc.Size(), sc)
+	}
 
 	v := lookupRank(sc, 1)
 	elt := tuple{v: v.v, g: v.rmin, delta: v.rmax - 1}
@@ -172,7 +189,9 @@ func prune(sc gksummary, b int) gksummary {
 		r = append(r, elt)
 	}
 
-	fmt.Printf(" after prune : len(r)=%d (n=%d) r= %v\n", r.Len(), r.Size(), r)
+	if debug {
+		fmt.Printf(" after prune : len(r)=%d (n=%d) r= %v\n", r.Len(), r.Size(), r)
+	}
 	return r
 }
 
@@ -213,8 +232,10 @@ func lookupRank(summary gksummary, r int) lookupResult {
 // or "COMBINE" in http://www.cs.umd.edu/~samir/498/kh.pdf
 func merge(s1, s2 gksummary) gksummary {
 
-	fmt.Printf("before merge: len(s1)=%d (n=%d) s1=%v\n", s1.Len(), s1.Size(), s1)
-	fmt.Printf("before merge: len(s2)=%d (n=%d) s2=%v\n", s2.Len(), s2.Size(), s2)
+	if debug {
+		fmt.Printf("before merge: len(s1)=%d (n=%d) s1=%v\n", s1.Len(), s1.Size(), s1)
+		fmt.Printf("before merge: len(s2)=%d (n=%d) s2=%v\n", s2.Len(), s2.Size(), s2)
+	}
 
 	if len(s1) == 0 {
 		return s2
@@ -376,25 +397,38 @@ func merge(s1, s2 gksummary) gksummary {
 	}
 
 	// all done
-	fmt.Printf(" after merge : len(r)=%d (n=%d) r=%v\n", r.Len(), r.Size(), r)
+
+	if debug {
+		fmt.Printf(" after merge : len(r)=%d (n=%d) r=%v\n", r.Len(), r.Size(), r)
+	}
+
 	r.mergeValues()
-	//	fmt.Printf(" after mergev: len(r)=%d (n=%d) r=%v\n", r.Len(), r.Size(), r)
+
 	return r
 }
 
 // !! Must call Finish to allow processing queries
 func (s *Stream) Finish() {
-	fmt.Println("Finish")
+	if debug {
+		fmt.Println("Finish")
+	}
 	sort.Sort(&s.summary[0])
 	s.summary[0].mergeValues()
 
 	s.Dump()
 
-	fmt.Println("size[0]=", s.summary[0].Size())
+	if debug {
+		fmt.Println("size[0]=", s.summary[0].Size())
+	}
 
 	for i := 1; i < len(s.summary); i++ {
+		if debug {
+			fmt.Printf("merging: %v\n", s.summary[i])
+		}
 		s.summary[0] = merge(s.summary[0], s.summary[i])
-		fmt.Printf("merged %d: size=%d\n", i, s.summary[0].Size())
+		if debug {
+			fmt.Printf("merged %d: size=%d\n", i, s.summary[0].Size())
+		}
 	}
 }
 
@@ -405,8 +439,10 @@ func (s *Stream) Query(q float64) float64 {
 
 	r := int(q * float64(s.n))
 
-	fmt.Println("querying rank=", r, "of", s.n, "items")
-	fmt.Println("querying s0.Size()=", s.summary[0].Size())
+	if debug {
+		fmt.Println("querying rank=", r, "of", s.n, "items")
+		fmt.Println("querying s0.Size()=", s.summary[0].Size())
+	}
 
 	var rmin int
 
