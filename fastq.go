@@ -240,18 +240,22 @@ func merge(s1, s2 gksummary) gksummary {
 		// talk in terms of r_min and r_max, but the data structure
 		// contains g and delta which let you _calculate_ r_min and r_max
 
-		if s1[i1].v == s2[i2].v {
-			s1[i1].delta += s2[i2].delta
-			if i2+1 < len(s2) {
-				s2[i2+1].g += s2[i2].g
+		/*
+			if s1[i1].v == s2[i2].v {
+				s1[i1].delta += s2[i2].delta
+					if i2+1 < len(s2) {
+						s2[i2+1].g += s2[i2].g
+					} else if i1+1 < len(s1) {
+						s1[i1+1].g += s2[i2].g
+					}
+				s2[i2].g = 0 // mark as skip
+				i2++
+				continue
 			}
-			s2[i2].g = 0 // mark as skip
-			i2++
-			continue
-		}
+		*/
 
 		// ugg, these two blocks are going to get out of sync..
-		if s1[i1].v < s2[i2].v {
+		if s1[i1].v <= s2[i2].v {
 
 			// rmin/rmax of s1[i1].v
 			rmin1 += s1[i1].g
@@ -267,8 +271,8 @@ func merge(s1, s2 gksummary) gksummary {
 			// find y_s with y_s < x_r
 			ysIdx := i2 - 1 // must start at i2-1, since if s2[i2] was smaller it would have been processed already
 			ysRmin := rmin2 // rmin2 is sum(s2[0:i2]), so == rmin(s2[ysIdx])
-			for ysIdx >= 0 && s2[ysIdx].g == 0 {
-				ysIdx--
+			for ; ysIdx >= 0 && s2[ysIdx].v >= xr.v; ysIdx-- {
+				ysRmin -= s2[ysIdx].g
 			}
 
 			var ziRmin int
@@ -293,7 +297,7 @@ func merge(s1, s2 gksummary) gksummary {
 
 			i1++
 
-		} else if s2[i2].v < s1[i1].v {
+		} else { // if s2[i2].v < s1[i1].v {
 
 			// rmin/rmax of s2[i1].v (current element)
 			rmin2 += s2[i2].g
@@ -309,6 +313,10 @@ func merge(s1, s2 gksummary) gksummary {
 			// find y_s with y_s < x_r
 			ysIdx := i1 - 1 // must start at i1-1, since if s1[i1] was smaller it would have been processed already
 			ysRmin := rmin1 // rmin1 is sum(s1[0:i1]), so == rmin(s1[ysIdx])
+
+			for ; ysIdx >= 0 && s1[ysIdx].v >= xr.v; ysIdx-- {
+				ysRmin -= s1[ysIdx].g
+			}
 
 			var ziRmin int
 			if ysIdx >= 0 {
