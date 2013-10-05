@@ -164,22 +164,31 @@ func prune(sc gksummary, b int) gksummary {
 		fmt.Printf("before prune: len(sc)=%d (n=%d) sc=%v\n", len(sc), sc.Size(), sc)
 	}
 
-	v := lookupRank(sc, 1)
-	elt := tuple{v: v.v, g: v.rmin, delta: v.rmax - 1}
+	elt := sc[0]
 	r = append(r, elt)
 
-	rmin := elt.g
+	scIdx := 0
+	scRmin := 1
 	for i := 1; i <= b; i++ {
 
 		rank := int(float64(sc.Size()) * float64(i) / float64(b))
-		v := lookupRank(sc, rank)
 
-		elt := tuple{v: v.v}
+		// find an element of rank 'rank' in sc
+		for scIdx < len(sc)-1 {
 
-		elt.g = v.rmin - rmin
-		rmin += elt.g
+			if scRmin <= rank && rank < scRmin+sc[scIdx+1].g {
+				break
+			}
 
-		elt.delta = v.rmax - rmin
+			scIdx++
+			scRmin += sc[scIdx].g
+		}
+
+		if scIdx >= len(sc) {
+			scIdx = len(sc) - 1
+		}
+
+		elt := sc[scIdx]
 
 		if r != nil && r[len(r)-1].v == elt.v {
 			// ignore if we've already seen it
@@ -193,39 +202,6 @@ func prune(sc gksummary, b int) gksummary {
 		fmt.Printf(" after prune : len(r)=%d (n=%d) r= %v\n", r.Len(), r.Size(), r)
 	}
 	return r
-}
-
-type lookupResult struct {
-	v    float64
-	rmin int
-	rmax int
-}
-
-// return the tuple containing rank 'r' in summary
-// combine this inline with prune(), otherwise we're O(n^2)
-// or over a channel?
-func lookupRank(summary gksummary, r int) lookupResult {
-
-	var rmin int
-
-	for i, t := range summary {
-		rmin += t.g
-		rmax := rmin + t.delta
-
-		if i+1 == len(summary) {
-			return lookupResult{v: t.v, rmin: rmin, rmax: rmax}
-
-		}
-
-		rmin_next := rmin + summary[i+1].g
-
-		// this is not entirely right
-		if rmin <= r && r < rmin_next {
-			return lookupResult{v: t.v, rmin: rmin, rmax: rmax}
-		}
-	}
-
-	panic("not found")
 }
 
 // From http://www.mathcs.emory.edu/~cheung/Courses/584-StreamDB/Syllabus/08-Quantile/Greenwald-D.html "Merge"
