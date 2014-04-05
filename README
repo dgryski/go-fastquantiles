@@ -20,3 +20,5 @@ http://papercruncher.com/2010/03/02/stream-algorithms-order-statistics/
 and more detailed notes at
 http://www.mathcs.emory.edu/~cheung/Courses/584-StreamDB/Syllabus/08-Quantile/Greenwald.html
 http://www.mathcs.emory.edu/~cheung/Courses/584-StreamDB/Syllabus/08-Quantile/Greenwald2.html
+
+The MERGE algorithm is taken from http://www.cs.ubc.ca/~xujian/paper/quant.pdf 

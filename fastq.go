@@ -204,9 +204,11 @@ func prune(sc gksummary, b int) gksummary {
 	return r
 }
 
-// From http://www.mathcs.emory.edu/~cheung/Courses/584-StreamDB/Syllabus/08-Quantile/Greenwald-D.html "Merge"
-// or "COMBINE" in http://www.cs.umd.edu/~samir/498/kh.pdf
-// or "MERGE" in http://www.cs.ubc.ca/~xujian/paper/quant.pdf
+// This is the Merge algorithm from
+// http://www.cs.ubc.ca/~xujian/paper/quant.pdf .  It is much simpler than the
+// MERGE algorithm at
+// http://www.mathcs.emory.edu/~cheung/Courses/584-StreamDB/Syllabus/08-Quantile/Greenwald-D.html
+// or "COMBINE" in http://www.cs.umd.edu/~samir/498/kh.pdf .
 func merge(s1, s2 gksummary, N1, N2 int) gksummary {
 
 	if debug {
@@ -257,6 +259,11 @@ func merge(s1, s2 gksummary, N1, N2 int) gksummary {
 		newt := tuple{v: t.v, g: t.g}
 
 		k++
+		// If you're following along with the paper, the Algorithm has
+		// a typo on lines 9 and 11.  The summation is listed as going
+		// from 1..k , which doesn't make any sense.  It should be
+		// 1..l, the number of summaries we're merging.  In this case,
+		// l=2, so we just add the sizes of the sets.
 		if k == 1 {
 			newt.delta = int(epsilon * (float64(N1) + float64(N2)))
 		} else {
@@ -272,6 +279,7 @@ func merge(s1, s2 gksummary, N1, N2 int) gksummary {
 		fmt.Printf(" after merge : len(r)=%d (n=%d) r=%v\n", smerge.Len(), smerge.Size(), smerge)
 	}
 
+	// The merged list might have duplicate elements -- merge them.
 	smerge.mergeValues()
 
 	return smerge
