@@ -8,7 +8,7 @@ import (
 
 var _ = fmt.Println
 
-var epsilon = 0.01
+var epsilon = 0.000001
 
 const debug = false
 
@@ -138,7 +138,7 @@ func (s *Stream) Update(e float64) {
 		   sk contained a compressed summary
 		   -------------------------------------- */
 
-		tmp := merge(s.summary[k], sc)
+		tmp := merge(s.summary[k], sc, s.b*(1<<uint(k)), s.b*(1<<uint(k))) // here we're merging two summaries with s.b * 2^k entries each
 		sc = prune(tmp, (s.b+1)/2+1)
 		// NOTE: sc is used in next iteration
 		// -  it is passed to the next level !
@@ -206,7 +206,8 @@ func prune(sc gksummary, b int) gksummary {
 
 // From http://www.mathcs.emory.edu/~cheung/Courses/584-StreamDB/Syllabus/08-Quantile/Greenwald-D.html "Merge"
 // or "COMBINE" in http://www.cs.umd.edu/~samir/498/kh.pdf
-func merge(s1, s2 gksummary) gksummary {
+// or "MERGE" in http://www.cs.ubc.ca/~xujian/paper/quant.pdf
+func merge(s1, s2 gksummary, N1, N2 int) gksummary {
 
 	if debug {
 		fmt.Printf("before merge: len(s1)=%d (n=%d) s1=%v\n", s1.Len(), s1.Size(), s1)
@@ -220,167 +221,60 @@ func merge(s1, s2 gksummary) gksummary {
 		return s1
 	}
 
-	var r gksummary
+	var smerge gksummary
 
 	var i1, i2 int
 
-	rmin1 := 0
-	rmin2 := 0
-
-	var rmax1, rmax2 int
-
 	rmin := 0
-	// merge sort s1, s2 on 'v'
-	for i1 < len(s1) && i2 < len(s2) {
+	k := 0
 
-		// This section is very tricky because the papers and course notes
-		// talk in terms of r_min and r_max, but the data structure
-		// contains g and delta which let you _calculate_ r_min and r_max
+	s1[0].g = 1
+	s2[0].g = 1
 
-		/*
-			if s1[i1].v == s2[i2].v {
-				s1[i1].delta += s2[i2].delta
-					if i2+1 < len(s2) {
-						s2[i2+1].g += s2[i2].g
-					} else if i1+1 < len(s1) {
-						s1[i1+1].g += s2[i2].g
-					}
-				s2[i2].g = 0 // mark as skip
+	for i1 < len(s1) || i2 < len(s2) {
+
+		var t tuple
+
+		if i1 < len(s1) && i2 < len(s2) {
+
+			if s1[i1].v <= s2[i2].v {
+				t = s1[i1]
+				i1++
+			} else {
+				t = s2[i2]
 				i2++
-				continue
 			}
-		*/
-
-		// ugg, these two blocks are going to get out of sync..
-		if s1[i1].v <= s2[i2].v {
-
-			// rmin/rmax of s1[i1].v
-			rmin1 += s1[i1].g
-			rmax1 = rmin1 + s1[i1].delta
-
-			// use notation from paper
-			xr := s1[i1]
-			xrRmin := rmin1
-			xrRmax := xrRmin + xr.delta
-
-			zi := tuple{v: xr.v}
-
-			// find y_s with y_s < x_r
-			ysIdx := i2 - 1 // must start at i2-1, since if s2[i2] was smaller it would have been processed already
-			ysRmin := rmin2 // rmin2 is sum(s2[0:i2]), so == rmin(s2[ysIdx])
-			for ; ysIdx >= 0 && s2[ysIdx].v >= xr.v; ysIdx-- {
-				ysRmin -= s2[ysIdx].g
-			}
-
-			var ziRmin int
-			if ysIdx >= 0 {
-				ziRmin = xrRmin + ysRmin
-			} else {
-				ziRmin = xrRmin
-			}
-
-			ytIdx := i2
-			ytRmin := rmin2 + s2[ytIdx].g
-
-			var ziRmax int
-			ytRmax := ytRmin + s2[ytIdx].delta
-			ziRmax = xrRmax + ytRmax - 1
-
-			zi.delta = ziRmax - ziRmin
-			zi.g = ziRmin - rmin
-
-			rmin += zi.g
-			r = append(r, zi)
-
+		} else if i1 < len(s1) && i2 >= len(s2) {
+			t = s1[i1]
 			i1++
-
-		} else { // if s2[i2].v < s1[i1].v {
-
-			// rmin/rmax of s2[i1].v (current element)
-			rmin2 += s2[i2].g
-			rmax2 = rmin2 + s2[i2].delta
-
-			// use notation from paper
-			xr := s2[i2]
-			xrRmin := rmin2
-			xrRmax := xrRmin + xr.delta
-
-			zi := tuple{v: xr.v}
-
-			// find y_s with y_s < x_r
-			ysIdx := i1 - 1 // must start at i1-1, since if s1[i1] was smaller it would have been processed already
-			ysRmin := rmin1 // rmin1 is sum(s1[0:i1]), so == rmin(s1[ysIdx])
-
-			for ; ysIdx >= 0 && s1[ysIdx].v >= xr.v; ysIdx-- {
-				ysRmin -= s1[ysIdx].g
-			}
-
-			var ziRmin int
-			if ysIdx >= 0 {
-				ziRmin = xrRmin + ysRmin
-			} else {
-				ziRmin = xrRmin
-			}
-
-			ytIdx := i1
-			ytRmin := rmin1 + s1[ytIdx].g
-
-			var ziRmax int
-			ytRmax := ytRmin + s1[ytIdx].delta
-			ziRmax = xrRmax + ytRmax - 1
-
-			zi.delta = ziRmax - ziRmin
-			zi.g = ziRmin - rmin
-
-			rmin += zi.g
-			r = append(r, zi)
-
+		} else if i1 >= len(s1) && i2 < len(s2) {
+			t = s2[i2]
 			i2++
+		} else {
+			panic("invariant violated")
 		}
-	}
 
-	// only one of these for-loops will ever happen
-	// FIXME: combine into single routine somehow (aliasing..)
+		newt := tuple{v: t.v, g: t.g}
 
-	for ; i1 < len(s1); i1++ {
-		elt := s1[i1]
-		rmin1 += elt.g
-		rmax1 := rmin1 + elt.delta
-
-		elt.g = rmin1 + rmin2 - rmin
-		rmin += elt.g
-
-		elt.delta = (rmax1 + rmax2) - rmin
-
-		r = append(r, elt)
-
-		i1++
-	}
-
-	for ; i2 < len(s2); i2++ {
-		elt := s2[i2]
-		rmin2 += elt.g
-		rmax2 := rmin2 + elt.delta
-
-		elt.g = rmin2 + rmin1 - rmin
-		rmin += elt.g
-
-		elt.delta = (rmax2 + rmax1) - rmin
-
-		r = append(r, elt)
-
-		i2++
+		k++
+		if k == 1 {
+			newt.delta = int(epsilon * (float64(N1) + float64(N2)))
+		} else {
+			newt.delta = rmin + int(2*epsilon*(float64(N1)+float64(N2)))
+			rmin += newt.g
+			smerge = append(smerge, newt)
+		}
 	}
 
 	// all done
 
 	if debug {
-		fmt.Printf(" after merge : len(r)=%d (n=%d) r=%v\n", r.Len(), r.Size(), r)
+		fmt.Printf(" after merge : len(r)=%d (n=%d) r=%v\n", smerge.Len(), smerge.Size(), smerge)
 	}
 
-	r.mergeValues()
+	smerge.mergeValues()
 
-	return r
+	return smerge
 }
 
 // !! Must call Finish to allow processing queries
@@ -397,11 +291,16 @@ func (s *Stream) Finish() {
 		fmt.Println("size[0]=", s.summary[0].Size())
 	}
 
+	size := len(s.summary[0])
+
 	for i := 1; i < len(s.summary); i++ {
 		if debug {
 			fmt.Printf("merging: %v\n", s.summary[i])
 		}
-		s.summary[0] = merge(s.summary[0], s.summary[i])
+		// FIXME(dgryski): hrm, merging two summaries with unequal elements here .. ?
+
+		s.summary[0] = merge(s.summary[0], s.summary[i], size, s.b*1<<uint(i))
+		size += s.b * 1 << uint(i)
 		if debug {
 			fmt.Printf("merged %d: size=%d\n", i, s.summary[0].Size())
 		}
