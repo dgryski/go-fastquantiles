@@ -270,8 +270,9 @@ func merge(s1, s2 gksummary, N1, N2 int) gksummary {
 		if k == 1 {
 			newt.delta = int(epsilon * (float64(N1) + float64(N2)))
 		} else {
-			newt.delta = rmin + int(2*epsilon*(float64(N1)+float64(N2)))
+			rmax := rmin + int(2*epsilon*(float64(N1)+float64(N2)))
 			rmin += newt.g
+			newt.delta = rmax - rmin
 			smerge = append(smerge, newt)
 		}
 	}
