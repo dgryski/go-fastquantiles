@@ -1,4 +1,4 @@
-package fastq
+package fastquantiles
 
 import (
 	"fmt"
