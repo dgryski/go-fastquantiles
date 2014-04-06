@@ -12,9 +12,10 @@ func TestMerge(t *testing.T) {
 	return
 
 	var tests = []struct {
-		s1, s2 []tuple
-		r      []tuple
-		n1, n2 int
+		s1, s2  []tuple
+		r       []tuple
+		epsilon float64
+		n1, n2  int
 	}{
 		{
 			//   Q'  = { 2:[1..1], 4:[3..4], 8:[5..6], 17:[8..8] }
@@ -42,6 +43,7 @@ func TestMerge(t *testing.T) {
 				{15, 3, 2},
 				{17, 3, 0},
 			},
+			0.375,
 			8, 8,
 		},
 		/*
@@ -127,7 +129,7 @@ func TestMerge(t *testing.T) {
 
 	for _, tst := range tests {
 
-		r := merge(tst.s1, tst.s2, tst.n1, tst.n2)
+		r := merge(tst.s1, tst.s2, tst.epsilon, tst.n1, tst.n2)
 
 		if !reflect.DeepEqual(tst.r, r) {
 			rmin := 0
@@ -145,15 +147,13 @@ func TestMerge(t *testing.T) {
 func TestPrune(t *testing.T) {
 
 	var tests = []struct {
-		s1  []int
-		b   int
-		eps float64
-		r   []tuple
+		s1 []int
+		b  int
+		r  []tuple
 	}{
 		{
 			[]int{1, 4, 7, 9, 11, 12, 13, 15},
 			3,
-			8.0 / 3.0,
 			[]tuple{},
 		},
 	}
@@ -167,7 +167,6 @@ func TestPrune(t *testing.T) {
 		}
 
 		sort.Sort(&g)
-		epsilon = tst.eps
 		(&g).mergeValues()
 
 		r := prune(g, tst.b)

@@ -1,14 +1,13 @@
 package fastquantiles
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"sort"
 )
 
 var _ = fmt.Println
-
-var epsilon = 0.000001
 
 const debug = false
 
@@ -78,13 +77,18 @@ func (gk *gksummary) mergeValues() {
 
 type Stream struct {
 	summary []gksummary
+	epsilon float64
 	n       int
 	b       int // block size
 }
 
-func New(n int) *Stream {
-	b := int(math.Floor(math.Log(epsilon*float64(n)) / epsilon))
-	return &Stream{summary: make([]gksummary, 1, 1), n: n, b: b}
+func New(epsilon float64, n int) (*Stream, error) {
+	epsN := epsilon * float64(n)
+	b := int(math.Floor(math.Log(epsN) / epsilon))
+	if b < 0 {
+		return nil, errors.New("epsilon too accurate for n")
+	}
+	return &Stream{summary: make([]gksummary, 1, 1), n: n, b: b}, nil
 }
 
 func (s *Stream) Dump() {
@@ -140,7 +144,7 @@ func (s *Stream) Update(e float64) {
 		   sk contained a compressed summary
 		   -------------------------------------- */
 
-		tmp := merge(s.summary[k], sc, s.b*(1<<uint(k)), s.b*(1<<uint(k))) // here we're merging two summaries with s.b * 2^k entries each
+		tmp := merge(s.summary[k], sc, s.epsilon, s.b*(1<<uint(k)), s.b*(1<<uint(k))) // here we're merging two summaries with s.b * 2^k entries each
 		sc = prune(tmp, (s.b+1)/2+1)
 		// NOTE: sc is used in next iteration
 		// -  it is passed to the next level !
@@ -212,7 +216,7 @@ func prune(sc gksummary, b int) gksummary {
 // http://www.mathcs.emory.edu/~cheung/Courses/584-StreamDB/Syllabus/08-Quantile/Greenwald-D.html
 // or "COMBINE" in http://www.cis.upenn.edu/~mbgreen/papers/chapter.pdf
 // "Quantiles and Equidepth Histograms over Streams" (Greenwald, Khanna 2005)
-func merge(s1, s2 gksummary, N1, N2 int) gksummary {
+func merge(s1, s2 gksummary, epsilon float64, N1, N2 int) gksummary {
 
 	if debug {
 		fmt.Printf("before merge: len(s1)=%d (n=%d) s1=%v\n", s1.Len(), s1.Size(), s1)
@@ -309,7 +313,7 @@ func (s *Stream) Finish() {
 		if debug {
 			fmt.Printf("merging: %v\n", s.summary[i])
 		}
-		s.summary[0] = merge(s.summary[0], s.summary[i], size, s.b*1<<uint(i))
+		s.summary[0] = merge(s.summary[0], s.summary[i], s.epsilon, size, s.b*1<<uint(i))
 		size += s.b * 1 << uint(i)
 		if debug {
 			fmt.Printf("merged %d: size=%d\n", i, s.summary[0].Size())

@@ -5,6 +5,8 @@ import (
 	"math"
 )
 
+const gkepsilon = 0.0001
+
 type GKStream struct {
 	summary *list.List
 	n       int
@@ -33,7 +35,7 @@ func (s *GKStream) Insert(v float64) {
 		// the new element is the new min or max
 		value.delta = 0
 	} else {
-		value.delta = int(math.Floor(2 * epsilon * float64(s.n)))
+		value.delta = int(math.Floor(2 * gkepsilon * float64(s.n)))
 	}
 
 	if idx == 0 {
@@ -45,7 +47,7 @@ func (s *GKStream) Insert(v float64) {
 	}
 
 	s.n++
-	if s.n%int(1.0/float64(2.0*epsilon)) == 0 {
+	if s.n%int(1.0/float64(2.0*gkepsilon)) == 0 {
 		s.compress()
 	}
 }
@@ -56,7 +58,7 @@ func (s *GKStream) compress() {
 		next := elt.Next()
 		t := elt.Value.(*tuple)
 		nt := next.Value.(*tuple)
-		if t.g+nt.g+nt.delta <= int(math.Floor(2*epsilon*float64(s.n))) {
+		if t.g+nt.g+nt.delta <= int(math.Floor(2*gkepsilon*float64(s.n))) {
 			nt.g += t.g
 			s.summary.Remove(elt)
 		}
@@ -79,7 +81,7 @@ func (s *GKStream) Query(q float64) float64 {
 		rmin += t.g
 		rmax := rmin + t.delta
 
-		if r-rmin <= int(epsilon*float64(s.n)) && rmax-r <= int(epsilon*float64(s.n)) {
+		if r-rmin <= int(gkepsilon*float64(s.n)) && rmax-r <= int(gkepsilon*float64(s.n)) {
 			return t.v
 		}
 	}
