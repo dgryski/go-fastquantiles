@@ -41,8 +41,10 @@ func (gk *gksummary) Size() int {
 
 }
 
-// reduces the number of elements but doesn't lose precision
-// value merging: from Appendig A of http://www.cis.upenn.edu/~mbgreen/papers/pods04.pdf
+// reduces the number of elements but doesn't lose precision.
+// Algorithm "value merging" in Appendix A of
+// "Power-Conserving Computation of Order-Statistics over Sensor Networks" (Greenwald, Khanna 2004)
+// http://www.cis.upenn.edu/~mbgreen/papers/pods04.pdf
 func (gk *gksummary) mergeValues() {
 
 	if debug {
@@ -208,7 +210,8 @@ func prune(sc gksummary, b int) gksummary {
 // http://www.cs.ubc.ca/~xujian/paper/quant.pdf .  It is much simpler than the
 // MERGE algorithm at
 // http://www.mathcs.emory.edu/~cheung/Courses/584-StreamDB/Syllabus/08-Quantile/Greenwald-D.html
-// or "COMBINE" in http://www.cs.umd.edu/~samir/498/kh.pdf .
+// or "COMBINE" in http://www.cis.upenn.edu/~mbgreen/papers/chapter.pdf
+// "Quantiles and Equidepth Histograms over Streams" (Greenwald, Khanna 2005)
 func merge(s1, s2 gksummary, N1, N2 int) gksummary {
 
 	if debug {
@@ -305,8 +308,6 @@ func (s *Stream) Finish() {
 		if debug {
 			fmt.Printf("merging: %v\n", s.summary[i])
 		}
-		// FIXME(dgryski): hrm, merging two summaries with unequal elements here .. ?
-
 		s.summary[0] = merge(s.summary[0], s.summary[i], size, s.b*1<<uint(i))
 		size += s.b * 1 << uint(i)
 		if debug {

@@ -11,7 +11,8 @@ Course notes:
 http://www.mathcs.emory.edu/~cheung/Courses/584-StreamDB/Syllabus/08-Quantile/Zhang.html
 http://www.mathcs.emory.edu/~cheung/Courses/584-StreamDB/Syllabus/08-Quantile/Zhang2.html
 
-Zhang/Wang is based on Greenwald and Khanna's algorithm from
+Zhang/Wang is based on the algorithm in
+"Space-Efﬁcient Online Computation of Quantile Summaries" (Greenwald, Khanna, 2001)
 http://infolab.stanford.edu/~datar/courses/cs361a/papers/quantiles.pdf
 
 So I decided to start with GK.  There's a good overview at
@@ -21,4 +22,7 @@ and more detailed notes at
 http://www.mathcs.emory.edu/~cheung/Courses/584-StreamDB/Syllabus/08-Quantile/Greenwald.html
 http://www.mathcs.emory.edu/~cheung/Courses/584-StreamDB/Syllabus/08-Quantile/Greenwald2.html
 
-The MERGE algorithm is taken from http://www.cs.ubc.ca/~xujian/paper/quant.pdf 
+The MERGE algorithm is taken from
+"Continuously Maintaining Quantile Summaries of the Most Recent N Elements over a Data Stream"
+(Lin, H. Lu, J. Xu, and J.X. Yu, 2004)
+http://www.cs.ubc.ca/~xujian/paper/quant.pdf
