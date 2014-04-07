@@ -164,14 +164,11 @@ func (s *Stream) Update(e float64) {
 // From http://www.mathcs.emory.edu/~cheung/Courses/584-StreamDB/Syllabus/08-Quantile/Greenwald-D.html "Prune"
 func prune(sc gksummary, b int) gksummary {
 
-	var r gksummary // result quantile summary
-
 	if debug {
 		fmt.Printf("before prune: len(sc)=%d (n=%d) sc=%v\n", len(sc), sc.Size(), sc)
 	}
 
-	elt := sc[0]
-	r = append(r, elt)
+	r := gksummary{sc[0]}
 
 	scIdx := 0
 	scRmin := 1
