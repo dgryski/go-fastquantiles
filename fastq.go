@@ -193,7 +193,7 @@ func prune(sc gksummary, b int) gksummary {
 
 		elt := sc[scIdx]
 
-		if r != nil && r[len(r)-1].v == elt.v {
+		if r[len(r)-1].v == elt.v {
 			// ignore if we've already seen it
 			continue
 		}
