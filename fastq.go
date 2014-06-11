@@ -232,12 +232,16 @@ func lookupRank(summary gksummary, r int, epsilon float64, n int) lookupResult {
 
 }
 
-// This is the Merge algorithm from
-// http://www.cs.ubc.ca/~xujian/paper/quant.pdf .  It is much simpler than the
-// MERGE algorithm at
+// Other 'merge' algorithms:
+// http://www.cs.ubc.ca/~xujian/paper/quant.pdf .
 // http://www.mathcs.emory.edu/~cheung/Courses/584-StreamDB/Syllabus/08-Quantile/Greenwald-D.html
 // or "COMBINE" in http://www.cis.upenn.edu/~mbgreen/papers/chapter.pdf
 // "Quantiles and Equidepth Histograms over Streams" (Greenwald, Khanna 2005)
+
+// This paper points out it's a merge, sort, and I *believe* that the new
+// rmin/rmax definitions just work out from the existing g/delta combinations.
+// "Power-conserving Computation of Order-Statistics over Sensor Networks"
+// http://www.cis.upenn.edu/~mbgreen/papers/pods04.pdf
 func merge(s1, s2 gksummary, epsilon float64, N1, N2 int) gksummary {
 
 	if debug {
@@ -255,9 +259,6 @@ func merge(s1, s2 gksummary, epsilon float64, N1, N2 int) gksummary {
 	var smerge gksummary
 
 	var i1, i2 int
-
-	rmin := 0
-	k := 0
 
 	s1[0].g = 1
 	s2[0].g = 1
@@ -285,28 +286,7 @@ func merge(s1, s2 gksummary, epsilon float64, N1, N2 int) gksummary {
 			panic("invariant violated")
 		}
 
-		newt := tuple{v: t.v, g: t.g, delta: t.delta}
-
-		k++
-
-		// If you're following along with the paper, the Algorithm has
-		// a typo on lines 9 and 11.  The summation is listed as going
-		// from 1..k , which doesn't make any sense.  It should be
-		// 1..l, the number of summaries we're merging.  In this case,
-		// l=2, so we just add the sizes of the sets.
-
-		// Oddly, not actually sure we need this
-		if false {
-			if k == 1 {
-				newt.delta = int(epsilon * (float64(N1) + float64(N2)))
-			} else {
-				rmax := rmin + int(2*epsilon*(float64(N1)+float64(N2)))
-				rmin += newt.g
-				newt.delta = rmax - rmin
-			}
-		}
-
-		smerge = append(smerge, newt)
+		smerge = append(smerge, t)
 	}
 
 	// all done
