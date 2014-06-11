@@ -122,7 +122,7 @@ func (s *Stream) Update(e float64) {
 
 	s.summary[0].mergeValues()
 
-	sc := prune(s.summary[0], (s.b+1)/2+1, s.epsilon, 0)
+	sc := prune(s.summary[0], (s.b+1)/2+1, 0, 0)
 	s.summary[0] = s.summary[0][:0] // empty
 
 	for k := 1; k < len(s.summary); k++ {
@@ -145,7 +145,7 @@ func (s *Stream) Update(e float64) {
 		   -------------------------------------- */
 
 		tmp := merge(s.summary[k], sc, s.epsilon, s.b*(1<<uint(k)), s.b*(1<<uint(k))) // here we're merging two summaries with s.b * 2^k entries each
-		sc = prune(tmp, (s.b+1)/2+1, s.epsilon, k)
+		sc = prune(tmp, (s.b+1)/2+1, float64(k)/float64(s.b), k)
 		// NOTE: sc is used in next iteration
 		// -  it is passed to the next level !
 
