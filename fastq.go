@@ -122,7 +122,7 @@ func (s *Stream) Update(e float64) {
 
 	s.summary[0].mergeValues()
 
-	sc := prune(s.summary[0], (s.b+1)/2+1)
+	sc := prune(s.summary[0], (s.b+1)/2+1, s.epsilon, 0)
 	s.summary[0] = s.summary[0][:0] // empty
 
 	for k := 1; k < len(s.summary); k++ {
@@ -145,7 +145,7 @@ func (s *Stream) Update(e float64) {
 		   -------------------------------------- */
 
 		tmp := merge(s.summary[k], sc, s.epsilon, s.b*(1<<uint(k)), s.b*(1<<uint(k))) // here we're merging two summaries with s.b * 2^k entries each
-		sc = prune(tmp, (s.b+1)/2+1)
+		sc = prune(tmp, (s.b+1)/2+1, s.epsilon, k)
 		// NOTE: sc is used in next iteration
 		// -  it is passed to the next level !
 
@@ -162,7 +162,7 @@ func (s *Stream) Update(e float64) {
 }
 
 // From http://www.mathcs.emory.edu/~cheung/Courses/584-StreamDB/Syllabus/08-Quantile/Greenwald-D.html "Prune"
-func prune(sc gksummary, b int) gksummary {
+func prune(sc gksummary, b int, epsilon float64, level int) gksummary {
 
 	if debug {
 		fmt.Printf("before prune: len(sc)=%d (n=%d) sc=%v\n", len(sc), sc.Size(), sc)
@@ -171,10 +171,12 @@ func prune(sc gksummary, b int) gksummary {
 	r := gksummary{sc[0]}
 
 	rmin := sc[0].g
+	size := sc.Size()
+
 	for i := 1; i <= b; i++ {
 
-		rank := int(float64(sc.Size()) * float64(i) / float64(b))
-		v := lookupRank(sc, rank)
+		rank := int(float64(size) * float64(i) / float64(b))
+		v := lookupRank(sc, rank, epsilon+float64(level)/float64(b), size)
 
 		elt := tuple{v: v.v}
 
@@ -206,28 +208,28 @@ type lookupResult struct {
 // return the tuple containing rank 'r' in summary
 // combine this inline with prune(), otherwise we're O(n^2)
 // or over a channel?
-func lookupRank(summary gksummary, r int) lookupResult {
+func lookupRank(summary gksummary, r int, epsilon float64, n int) lookupResult {
 
 	var rmin int
 
-	for i, t := range summary {
+	if r == 1 {
+		return lookupResult{v: summary[0].v, rmin: 1, rmax: summary[0].delta + 1}
+	}
+
+	epsN := int(epsilon * float64(n))
+
+	for _, t := range summary {
+
 		rmin += t.g
 		rmax := rmin + t.delta
 
-		if i+1 == len(summary) {
-			return lookupResult{v: t.v, rmin: rmin, rmax: rmax}
-
-		}
-
-		rmin_next := rmin + summary[i+1].g
-
-		// this is not entirely right
-		if rmin <= r && r < rmin_next {
+		if r-rmin <= epsN && rmax-r <= epsN {
 			return lookupResult{v: t.v, rmin: rmin, rmax: rmax}
 		}
 	}
 
-	panic("not found")
+	return lookupResult{v: summary[len(summary)-1].v, rmin: rmin, rmax: rmin + summary[len(summary)-1].delta}
+
 }
 
 // This is the Merge algorithm from
@@ -354,21 +356,26 @@ func (s *Stream) Query(q float64) float64 {
 		fmt.Println("querying s0.Size()=", s.summary[0].Size())
 	}
 
+	if r == 1 {
+		return s.summary[0][0].v
+	}
+
+	fmt.Println(s.summary[0])
+
+	epsN := int(s.epsilon * float64(s.n))
+
+	fmt.Println("epsN=", epsN)
+
 	var rmin int
-
-	for i, t := range s.summary[0] {
-
-		if i+1 == len(s.summary[0]) {
-			return t.v
-		}
-
+	for _, t := range s.summary[0] {
 		rmin += t.g
-		rminNext := rmin + s.summary[0][i+1].g
+		rmax := rmin + t.delta
 
-		if rmin <= r && r < rminNext {
+		if r-rmin <= epsN && rmax-r <= epsN {
+			fmt.Println("r=", r, "rmin=", rmin, "rmax=", rmax)
 			return t.v
 		}
 	}
 
-	panic("not reached")
+	return s.summary[0][len(s.summary[0])-1].v
 }
