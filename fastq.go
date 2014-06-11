@@ -297,8 +297,9 @@ func merge(s1, s2 gksummary, epsilon float64, N1, N2 int) gksummary {
 			rmax := rmin + int(2*epsilon*(float64(N1)+float64(N2)))
 			rmin += newt.g
 			newt.delta = rmax - rmin
-			smerge = append(smerge, newt)
 		}
+
+		smerge = append(smerge, newt)
 	}
 
 	// all done
