@@ -88,7 +88,7 @@ func New(epsilon float64, n int) (*Stream, error) {
 	if b < 0 {
 		return nil, errors.New("epsilon too accurate for n")
 	}
-	return &Stream{summary: make([]gksummary, 1, 1), n: n, b: b}, nil
+	return &Stream{summary: make([]gksummary, 1, 1), epsilon: epsilon, n: n, b: b}, nil
 }
 
 func (s *Stream) Dump() {
