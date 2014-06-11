@@ -170,28 +170,18 @@ func prune(sc gksummary, b int) gksummary {
 
 	r := gksummary{sc[0]}
 
-	scIdx := 0
-	scRmin := 1
+	rmin := sc[0].g
 	for i := 1; i <= b; i++ {
 
 		rank := int(float64(sc.Size()) * float64(i) / float64(b))
+		v := lookupRank(sc, rank)
 
-		// find an element of rank 'rank' in sc
-		for scIdx < len(sc)-1 {
+		elt := tuple{v: v.v}
 
-			if scRmin <= rank && rank < scRmin+sc[scIdx+1].g {
-				break
-			}
+		elt.g = v.rmin - rmin
+		rmin += elt.g
 
-			scIdx++
-			scRmin += sc[scIdx].g
-		}
-
-		if scIdx >= len(sc) {
-			scIdx = len(sc) - 1
-		}
-
-		elt := sc[scIdx]
+		elt.delta = v.rmax - rmin
 
 		if r[len(r)-1].v == elt.v {
 			// ignore if we've already seen it
@@ -205,6 +195,39 @@ func prune(sc gksummary, b int) gksummary {
 		fmt.Printf(" after prune : len(r)=%d (n=%d) r= %v\n", r.Len(), r.Size(), r)
 	}
 	return r
+}
+
+type lookupResult struct {
+	v    float64
+	rmin int
+	rmax int
+}
+
+// return the tuple containing rank 'r' in summary
+// combine this inline with prune(), otherwise we're O(n^2)
+// or over a channel?
+func lookupRank(summary gksummary, r int) lookupResult {
+
+	var rmin int
+
+	for i, t := range summary {
+		rmin += t.g
+		rmax := rmin + t.delta
+
+		if i+1 == len(summary) {
+			return lookupResult{v: t.v, rmin: rmin, rmax: rmax}
+
+		}
+
+		rmin_next := rmin + summary[i+1].g
+
+		// this is not entirely right
+		if rmin <= r && r < rmin_next {
+			return lookupResult{v: t.v, rmin: rmin, rmax: rmax}
+		}
+	}
+
+	panic("not found")
 }
 
 // This is the Merge algorithm from
