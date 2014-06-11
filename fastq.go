@@ -285,20 +285,25 @@ func merge(s1, s2 gksummary, epsilon float64, N1, N2 int) gksummary {
 			panic("invariant violated")
 		}
 
-		newt := tuple{v: t.v, g: t.g}
+		newt := tuple{v: t.v, g: t.g, delta: t.delta}
 
 		k++
+
 		// If you're following along with the paper, the Algorithm has
 		// a typo on lines 9 and 11.  The summation is listed as going
 		// from 1..k , which doesn't make any sense.  It should be
 		// 1..l, the number of summaries we're merging.  In this case,
 		// l=2, so we just add the sizes of the sets.
-		if k == 1 {
-			newt.delta = int(epsilon * (float64(N1) + float64(N2)))
-		} else {
-			rmax := rmin + int(2*epsilon*(float64(N1)+float64(N2)))
-			rmin += newt.g
-			newt.delta = rmax - rmin
+
+		// Oddly, not actually sure we need this
+		if false {
+			if k == 1 {
+				newt.delta = int(epsilon * (float64(N1) + float64(N2)))
+			} else {
+				rmax := rmin + int(2*epsilon*(float64(N1)+float64(N2)))
+				rmin += newt.g
+				newt.delta = rmax - rmin
+			}
 		}
 
 		smerge = append(smerge, newt)
