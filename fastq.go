@@ -144,7 +144,7 @@ func (s *Stream) Update(e float64) {
 		   sk contained a compressed summary
 		   -------------------------------------- */
 
-		tmp := merge(s.summary[k], sc, s.epsilon, s.b*(1<<uint(k)), s.b*(1<<uint(k))) // here we're merging two summaries with s.b * 2^k entries each
+		tmp := merge(s.summary[k], sc, float64(k)/float64(s.b), s.b*(1<<uint(k)), s.b*(1<<uint(k))) // here we're merging two summaries with s.b * 2^k entries each
 		sc = prune(tmp, (s.b+1)/2+1, float64(k)/float64(s.b), k)
 		// NOTE: sc is used in next iteration
 		// -  it is passed to the next level !
