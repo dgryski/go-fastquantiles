@@ -346,12 +346,7 @@ func (s *Stream) Query(q float64) float64 {
 	if r == 1 {
 		return s.summary[0][0].v
 	}
-
-	fmt.Println(s.summary[0])
-
 	epsN := int(s.epsilon * float64(s.n))
-
-	fmt.Println("epsN=", epsN)
 
 	var rmin int
 	for _, t := range s.summary[0] {
@@ -359,7 +354,6 @@ func (s *Stream) Query(q float64) float64 {
 		rmax := rmin + t.delta
 
 		if r-rmin <= epsN && rmax-r <= epsN {
-			fmt.Println("r=", r, "rmin=", rmin, "rmax=", rmax)
 			return t.v
 		}
 	}
