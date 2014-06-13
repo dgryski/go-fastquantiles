@@ -262,9 +262,6 @@ func merge(s1, s2 gksummary, epsilon float64, N1, N2 int) gksummary {
 
 	var i1, i2 int
 
-	s1[0].g = 1
-	s2[0].g = 1
-
 	for i1 < len(s1) || i2 < len(s2) {
 
 		var t tuple
