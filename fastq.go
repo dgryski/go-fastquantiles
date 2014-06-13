@@ -46,6 +46,8 @@ func (gk *gksummary) Size() int {
 // http://www.cis.upenn.edu/~mbgreen/papers/pods04.pdf
 func (gk *gksummary) mergeValues() {
 
+	return
+
 	if debug {
 		fmt.Println("before: size=", gk.Size(), gk)
 	}
