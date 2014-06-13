@@ -1,5 +1,9 @@
 Approximate streaming quantiles
 
+NOTE: THIS CODE IS CURRENTLY BROKEN
+
+For a fast streaming quantile implementation, please see github.com/dgryski/go-gk
+
 
 My goal is to implement:
 
