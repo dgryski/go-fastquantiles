@@ -160,11 +160,12 @@ func prune(sc gksummary, b int, epsilon float64, level int) gksummary {
 		rmin += elt.g
 
 		elt.delta = v.rmax - rmin
-
-		if r[len(r)-1].v == elt.v {
-			// ignore if we've already seen it
-			continue
-		}
+		/*
+			if r[len(r)-1].v == elt.v {
+				// ignore if we've already seen it
+				continue
+			}
+		*/
 		r = append(r, elt)
 	}
 
