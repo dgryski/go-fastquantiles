@@ -191,7 +191,6 @@ func prune(sc gksummary, b int, epsilon float64, level int) gksummary {
 			// ignore if we've already seen it
 			continue
 		}
-
 		r = append(r, elt)
 	}
 
@@ -266,23 +265,45 @@ func merge(s1, s2 gksummary, epsilon float64, N1, N2 int) gksummary {
 
 		var t tuple
 
+		var from int
+
 		if i1 < len(s1) && i2 < len(s2) {
 
 			if s1[i1].v <= s2[i2].v {
 				t = s1[i1]
+				from = 1
 				i1++
 			} else {
 				t = s2[i2]
+				from = 2
 				i2++
 			}
 		} else if i1 < len(s1) && i2 >= len(s2) {
 			t = s1[i1]
+			from = 1
 			i1++
 		} else if i1 >= len(s1) && i2 < len(s2) {
 			t = s2[i2]
+			from = 2
 			i2++
 		} else {
 			panic("invariant violated")
+		}
+
+		if from == 1 {
+			if i2 < len(s2) {
+				t.delta += s2[i2].g + s2[i2].delta - 1
+			} else {
+				t.delta += s2[i2-1].g + s2[i2-1].delta
+			}
+		}
+
+		if from == 2 {
+			if i1 < len(s1) {
+				t.delta += s1[i1].g + s1[i1].delta - 1
+			} else {
+				t.delta += s1[i1-1].g + s1[i1-1].delta
+			}
 		}
 
 		smerge = append(smerge, t)
