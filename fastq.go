@@ -9,8 +9,6 @@ import (
 
 var _ = fmt.Println
 
-const debug = false
-
 type tuple struct {
 	v     float64
 	g     int
@@ -48,10 +46,6 @@ func (gk *gksummary) mergeValues() {
 
 	return
 
-	if debug {
-		fmt.Println("before: size=", gk.Size(), gk)
-	}
-
 	var missing int
 
 	var dst int
@@ -71,10 +65,6 @@ func (gk *gksummary) mergeValues() {
 	}
 
 	(*gk) = (*gk)[:dst+1]
-
-	if debug {
-		fmt.Println(" after: size=", gk.Size(), gk)
-	}
 }
 
 type Stream struct {
@@ -95,15 +85,9 @@ func New(epsilon float64, n int) (*Stream, error) {
 
 func (s *Stream) Dump() {
 
-	if !debug {
-		return
+	for _, ss := range s.summary {
+		fmt.Println(ss)
 	}
-
-	fmt.Printf("stream size: %d\n", s.n)
-	for i, sl := range s.summary {
-		fmt.Printf("summary[%d]=%d\n", i, sl.Size())
-	}
-
 }
 
 func (s *Stream) Update(e float64) {
@@ -134,9 +118,6 @@ func (s *Stream) Update(e float64) {
 			   Empty: put compressed summary in sk
 			   -------------------------------------- */
 
-			if debug {
-				fmt.Println("setting", k, "to ", sc.Size())
-			}
 			s.summary[k] = sc // Store it
 			s.Dump()
 			return // Done
@@ -156,19 +137,12 @@ func (s *Stream) Update(e float64) {
 
 	// fell off the end of our loop -- no more s.summary entries
 	s.summary = append(s.summary, sc)
-	if debug {
-		fmt.Println("fell off the end:", sc.Size())
-	}
 	s.Dump()
 
 }
 
 // From http://www.mathcs.emory.edu/~cheung/Courses/584-StreamDB/Syllabus/08-Quantile/Greenwald-D.html "Prune"
 func prune(sc gksummary, b int, epsilon float64, level int) gksummary {
-
-	if debug {
-		fmt.Printf("before prune: len(sc)=%d (n=%d) sc=%v\n", len(sc), sc.Size(), sc)
-	}
 
 	r := gksummary{sc[0]}
 
@@ -194,9 +168,6 @@ func prune(sc gksummary, b int, epsilon float64, level int) gksummary {
 		r = append(r, elt)
 	}
 
-	if debug {
-		fmt.Printf(" after prune : len(r)=%d (n=%d) r= %v\n", r.Len(), r.Size(), r)
-	}
 	return r
 }
 
@@ -244,11 +215,6 @@ func lookupRank(summary gksummary, r int, epsilon float64, n int) lookupResult {
 // "Power-conserving Computation of Order-Statistics over Sensor Networks"
 // http://www.cis.upenn.edu/~mbgreen/papers/pods04.pdf
 func merge(s1, s2 gksummary, epsilon float64, N1, N2 int) gksummary {
-
-	if debug {
-		fmt.Printf("before merge: len(s1)=%d (n=%d) s1=%v\n", s1.Len(), s1.Size(), s1)
-		fmt.Printf("before merge: len(s2)=%d (n=%d) s2=%v\n", s2.Len(), s2.Size(), s2)
-	}
 
 	if len(s1) == 0 {
 		return s2
@@ -311,10 +277,6 @@ func merge(s1, s2 gksummary, epsilon float64, N1, N2 int) gksummary {
 
 	// all done
 
-	if debug {
-		fmt.Printf(" after merge : len(r)=%d (n=%d) r=%v\n", smerge.Len(), smerge.Size(), smerge)
-	}
-
 	// The merged list might have duplicate elements -- merge them.
 	smerge.mergeValues()
 
@@ -323,29 +285,14 @@ func merge(s1, s2 gksummary, epsilon float64, N1, N2 int) gksummary {
 
 // !! Must call Finish to allow processing queries
 func (s *Stream) Finish() {
-	if debug {
-		fmt.Println("Finish")
-	}
 	sort.Sort(&s.summary[0])
 	s.summary[0].mergeValues()
-
-	s.Dump()
-
-	if debug {
-		fmt.Println("size[0]=", s.summary[0].Size())
-	}
 
 	size := len(s.summary[0])
 
 	for i := 1; i < len(s.summary); i++ {
-		if debug {
-			fmt.Printf("merging: %v\n", s.summary[i])
-		}
 		s.summary[0] = merge(s.summary[0], s.summary[i], s.epsilon, size, s.b*1<<uint(i))
 		size += s.b * 1 << uint(i)
-		if debug {
-			fmt.Printf("merged %d: size=%d\n", i, s.summary[0].Size())
-		}
 	}
 }
 
@@ -355,11 +302,6 @@ func (s *Stream) Query(q float64) float64 {
 	// convert quantile to rank
 
 	r := int(q * float64(s.n))
-
-	if debug {
-		fmt.Println("querying rank=", r, "of", s.n, "items")
-		fmt.Println("querying s0.Size()=", s.summary[0].Size())
-	}
 
 	if r == 1 {
 		return s.summary[0][0].v
