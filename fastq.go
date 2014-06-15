@@ -127,7 +127,7 @@ func (s *Stream) Update(e float64) {
 		   sk contained a compressed summary
 		   -------------------------------------- */
 
-		tmp := merge(s.summary[k], sc, float64(k)/float64(s.b), s.b*(1<<uint(k)), s.b*(1<<uint(k))) // here we're merging two summaries with s.b * 2^k entries each
+		tmp := merge(s.summary[k], sc) // here we're merging two summaries with s.b * 2^k entries each
 		sc = prune(tmp, (s.b+1)/2+1, float64(k)/float64(s.b), k)
 		// NOTE: sc is used in next iteration
 		// -  it is passed to the next level !
@@ -215,7 +215,7 @@ func lookupRank(summary gksummary, r int, epsilon float64, n int) lookupResult {
 // rmin/rmax definitions just work out from the existing g/delta combinations.
 // "Power-conserving Computation of Order-Statistics over Sensor Networks"
 // http://www.cis.upenn.edu/~mbgreen/papers/pods04.pdf
-func merge(s1, s2 gksummary, epsilon float64, N1, N2 int) gksummary {
+func merge(s1, s2 gksummary) gksummary {
 
 	if len(s1) == 0 {
 		return s2
@@ -292,7 +292,7 @@ func (s *Stream) Finish() {
 	size := len(s.summary[0])
 
 	for i := 1; i < len(s.summary); i++ {
-		s.summary[0] = merge(s.summary[0], s.summary[i], s.epsilon, size, s.b*1<<uint(i))
+		s.summary[0] = merge(s.summary[0], s.summary[i])
 		size += s.b * 1 << uint(i)
 	}
 }
